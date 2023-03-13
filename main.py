@@ -967,8 +967,6 @@ async def signup(data: JSONStructure = None):
         hashed = hashlib.sha256(data["password"].encode('utf-8')).hexdigest()
         signupdata["email"] = data["email"]
         signupdata["password"] = hashed
-        
-        print(signupdata["email"])
         email_exists = importcsv.db.users.find_one({"email": signupdata["email"]})
         email_exists_student = importcsv.db.studentsubscriptions.find_one({"email": signupdata["email"]}) # Checks if student account exists
         if email_exists or email_exists_student:
@@ -978,8 +976,8 @@ async def signup(data: JSONStructure = None):
             #if datetime.now() < "2022-05-19T21:37:00.057084":
             #    signupdata.update({"betatest":"true"})
             importcsv.db.users.insert_one(signupdata)
-            access_token = secure_encode({{"email":signupdata["email"]}})#create_access_token(identity=signupdata["email"])
-            callback = {"status": "success","id": str(signupdata["_id"]),"access_token":access_token}
+            access_token = secure_encode({"email":signupdata["email"]})#create_access_token(identity=signupdata["email"])
+            callback = {"status": "success","access_token":access_token}
             return callback
     except Exception as ex:
         error_detected = {"error": "error occured","errortype":type(ex), "error": str(ex)}
