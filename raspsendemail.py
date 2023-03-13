@@ -7,17 +7,17 @@ from email.mime.text import MIMEText
 
 class RaspEmail:
     @staticmethod
-    def send(receiver_email,subject,htmlmessage,attachment=None):
+    def send(email,subject,message,attachment=None):
         sender_email = "revisionbankedu@gmail.com"
         message = MIMEMultipart("alternative")
         message["Subject"] = subject
         message["From"] = sender_email
-        message["To"] = receiver_email
+        message["To"] = email
         password = "ktqgjfzgcbfacsve"
 
 
         # Turn these into plain/html MIMEText objects
-        part1 = MIMEText(htmlmessage, "html")
+        part1 = MIMEText(message, "html")
 
         # Add HTML/plain-text parts to MIMEMultipart message.
         # The email client will try to render the last part first

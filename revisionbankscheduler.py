@@ -9,7 +9,7 @@ class RevisionBankScheduler:
     def sendimagecard(self,user,card):
         imagecardjson = {"email":user["sendtoemail"],"message":f"{card['revisioncardtitle']}\n{card['revisioncard']}","subject":card["subject"],"attachment":[{card["revisioncardimgname"][0]:card["revisioncardimage"][0]}]}
         ##print(user["sendtoemail"])
-        RaspEmail.send(receiver_email = imagecardjson["email"],subject = imagecardjson["subject"],htmlmessage = imagecardjson["message"],attachment = imagecardjson["attachment"])
+        RaspEmail.send(email = imagecardjson["email"],subject = imagecardjson["subject"],message = imagecardjson["message"],attachment = imagecardjson["attachment"])
         
         #response = requests.post("https://revisionbank-email.onrender.com/raspsendemail",json={"raspsendemail":{"email":user["sendtoemail"],"message":f"{card['revisioncardtitle']}\n{card['revisioncard']}","subject":card["subject"],"attachment":[{card["revisioncardimgname"][0]:card["revisioncardimage"][0]}]}})
         
@@ -21,7 +21,7 @@ class RevisionBankScheduler:
         textcardjson = {"email":user["sendtoemail"],"message":f"{card['revisioncardtitle']}\n{card['revisioncard']}","subject":card["subject"]}
         #print(textcardjson["attachment"])
         #print(textcardjson)
-        RaspEmail.send(receiver_email = textcardjson["email"],subject = textcardjson["subject"],htmlmessage = textcardjson["message"])#,attachment = textcardjson["attachment"])
+        RaspEmail.send(email = textcardjson["email"],subject = textcardjson["subject"],message = textcardjson["message"])#,attachment = textcardjson["attachment"])
         
         #sendgrid_send(user["sendtoemail"],f"{card['revisioncardtitle']}\n{card['revisioncard']}",card["subject"])
         #print(response.text)
@@ -121,7 +121,7 @@ class RevisionBankScheduler:
                     if "revisioncardimage" in card:
                         #print([{card["revisioncardimgname"][0]:card["revisioncardimage"][0]}])
                         imagecardjson = {"email":user["sendtoemail"],"message":f"{card['revisioncardtitle']}\n{card['revisioncard']}","subject":card["subject"],"attachment":[{card["revisioncardimgname"][0]:card["revisioncardimage"][0]}]}
-                        RaspEmail.send(receiver_email = imagecardjson["email"],subject = imagecardjson["subject"],htmlmessage = imagecardjson["message"],attachment = imagecardjson["attachment"])
+                        RaspEmail.send(email = imagecardjson["email"],subject = imagecardjson["subject"],message = imagecardjson["message"],attachment = imagecardjson["attachment"])
                         
                         #response = requests.post("https://revisionbank-email.onrender.com/raspsendemail",json={"raspsendemail":{"email":user["sendtoemail"],"message":f"{card['revisioncardtitle']}\n{card['revisioncard']}","subject":card["subject"],"attachment":[{card["revisioncardimgname"][0]:card["revisioncardimage"][0]}]}})
                         #sendgrid_send(user["sendtoemail"],f"{card['revisioncardtitle']}\n{card['revisioncard']}",card["subject"])
@@ -129,7 +129,7 @@ class RevisionBankScheduler:
                     elif "revisioncardimage" not in card:
                         #response = requests.post("https://revisionbank-email.onrender.com/raspsendemail",json={"raspsendemail":{"email":user["sendtoemail"],"message":f"{card['revisioncardtitle']}\n{card['revisioncard']}","subject":card["subject"]}})
                         textcardjson = {"email":user["sendtoemail"],"message":f"{card['revisioncardtitle']}\n{card['revisioncard']}","subject":card["subject"]}
-                        RaspEmail.send(receiver_email = textcardjson["email"],subject = textcardjson["subject"],htmlmessage = textcardjson["message"],attachment = textcardjson["attachment"])
+                        RaspEmail.send(email = textcardjson["email"],subject = textcardjson["subject"],message = textcardjson["message"],attachment = textcardjson["attachment"])
                         
                         #sendgrid_send(user["sendtoemail"],f"{card['revisioncardtitle']}\n{card['revisioncard']}",card["subject"])
                         print("Traffic light card sent.")

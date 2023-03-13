@@ -38,6 +38,7 @@ import pytesseract
 from forgotpassemail import forgotpasswordemail
 from RevisionBankModels import *
 from fastapi_utils.tasks import repeat_every
+from raspsendemail import RaspEmail
 from revisionbankscheduler import RevisionBankScheduler
 app = FastAPI()
 app.add_middleware(
@@ -97,7 +98,7 @@ async def index():
 
 
 @app.on_event("startup")
-@repeat_every(seconds= time_hour * 0.05 )  # 24 hours 24
+@repeat_every(seconds= time_hour * 2 )  # 24 hours 24
 async def revisionbankschedulerevisioncardsrepeat() -> None:
     revisionbankschedule.runschedule()
     print("All Cards sent.")
@@ -473,7 +474,8 @@ async def sendnowrevisioncard(data : JSONStructure = None, authorization: str = 
             data = dict(data)#request.get_json()
             now = datetime.now().strftime("%c")
             message = f"""{data['revisioncards'][0]['revisioncardtitle']}{data["revisioncards"][0]["revisioncard"]}"""
-            response = requests.post("http://0.0.0.0:7860/raspsendemail",json={"raspsendemail":{"email":data["sendtoemail"],"message":message,"subject":f"{data['revisioncards'][0]['subject']} Send Now"}})
+            #response = requests.post("http://0.0.0.0:7860/raspsendemail",json={"raspsendemail":{"email":data["sendtoemail"],"message":message,"subject":f"{data['revisioncards'][0]['subject']} Send Now"}})
+            RaspEmail.send(**{"email":data["sendtoemail"],"message":message,"subject":f"{data['revisioncards'][0]['subject']} Send Now"})
             #print(response.text)
             #msg = Message(f"{data['revisioncards'][0]['subject']} Send Now", recipients=[data["sendtoemail"]]) # "amari.lawal@gmail.com"
             #msg.body = f"Mail from RevisionCard Send Now at {now}"
@@ -610,8 +612,9 @@ async def fmathsqp(data : JSONStructure = None, authorization: str = Header(None
                         <h1>The Further Maths question papers links:</h1>
                         <p>{linkmessage}</p>.
                         """
-                        response = requests.post("http://0.0.0.0:7860/raspsendemail",json={"raspsendemail":{"email":email,"message":message,"subject":"FMathqp PDFs"}})
-                        
+                        #response = requests.post("http://0.0.0.0:7860/raspsendemail",json={"raspsendemail":{"email":email,"message":message,"subject":"FMathqp PDFs"}})
+                        RaspEmail.send(**{"email":email,"message":message,"subject":"FMathqp PDFs"})
+            
                         #msg = Message("FMathqp PDFs", recipients=[email]) # "amari.lawal@gmail.com"
                         #msg.body = f"Mail from FMathqp at {now}"
                         #msg.html = f"""
@@ -648,8 +651,8 @@ async def fmathsqp(data : JSONStructure = None, authorization: str = Header(None
                         <h1>The Further Maths question papers links:</h1>
                         <p>{linkmessage}</p>.
                         """
-                        response = requests.post("http://0.0.0.0:7860/raspsendemail",json={"raspsendemail":{"email":email,"message":message,"subject":"FMathqp PDFs"}})
-                        
+                        #response = requests.post("http://0.0.0.0:7860/raspsendemail",json={"raspsendemail":{"email":email,"message":message,"subject":"FMathqp PDFs"}})
+                        RaspEmail.send(**{"email":email,"message":message,"subject":"FMathqp PDFs"})
                         user_from_db.update({"emailsleft":int(user_from_db["emailsleft"])-1})
                         importcsv.db.studentsubscriptions.update_one({"email": current_user}, {"$set": user_from_db},upsert=True)
                         if platform == "app":
@@ -743,8 +746,8 @@ async def fmathsb(data : JSONStructure = None, authorization: str = Header(None)
                         <h1>The Further Maths Solution Bank links:</h1>
                         <p>{linkmessage}</p>.
                         """
-                        response = requests.post("http://0.0.0.0:7860/raspsendemail",json={"raspsendemail":{"email":email,"message":message,"subject":"FMathSB PDFs"}})
-                        
+                        #response = requests.post("http://0.0.0.0:7860/raspsendemail",json={"raspsendemail":{"email":email,"message":message,"subject":"FMathSB PDFs"}})
+                        RaspEmail.send(**{"email":email,"message":message,"subject":"FMathSB PDFs"})
                         #msg = Message("FMathSB PDFs", recipients=[email]) # "amari.lawal@gmail.com"
                         #msg.body = f"Mail from FMathsb at {now}"
                         #msg.html = f"""
@@ -782,8 +785,8 @@ async def fmathsb(data : JSONStructure = None, authorization: str = Header(None)
                         <h1>The Further Maths Solution Bank links:</h1>
                         <p>{linkmessage}</p>.
                         """
-                        response = requests.post("http://0.0.0.0:7860/raspsendemail",json={"raspsendemail":{"email":email,"message":message,"subject":"FMathSB PDFs"}})
-                        
+                        #response = requests.post("http://0.0.0.0:7860/raspsendemail",json={"raspsendemail":{"email":email,"message":message,"subject":"FMathSB PDFs"}})
+                        RaspEmail.send(**{"email":email,"message":message,"subject":"FMathSB PDFs"})
                         user_from_db.update({"emailsleft":int(user_from_db["emailsleft"])-1})
                         importcsv.db.studentsubscriptions.update_one({"email": current_user}, {"$set": user_from_db},upsert=True)
                         if platform == "app":
@@ -845,8 +848,8 @@ async def scienceocranswers(data : JSONStructure = None, authorization: str = He
                     <h1>OCR Science {query} Answers:</h1>
                     <p>{answerlink}</p>.
                     """
-                    response = requests.post("http://0.0.0.0:7860/raspsendemail",json={"raspsendemail":{"email":email,"message":message,"subject":f"OCR {query} Answers"}})
-                    
+                    #response = requests.post("http://0.0.0.0:7860/raspsendemail",json={"raspsendemail":{"email":email,"message":message,"subject":f"OCR {query} Answers"}})
+                    RaspEmail.send(**{"email":email,"message":message,"subject":f"OCR {query} Answers"})
                     #msg = Message(f"OCR {query} Answers", recipients=[email]) # "amari.lawal@gmail.com"
                     #msg.body = f"Mail from {query} at {now}"
                     #msg.html = f"""
@@ -873,7 +876,8 @@ async def scienceocranswers(data : JSONStructure = None, authorization: str = He
                     <h1>OCR Science {query} Answers:</h1>
                     <p>{answerlink}</p>.
                     """
-                    response = requests.post("http://0.0.0.0:7860/raspsendemail",json={"raspsendemail":{"email":email,"message":message,"subject":f"OCR {query} Answers"}})     
+                    #response = requests.post("http://0.0.0.0:7860/raspsendemail",json={"raspsendemail":{"email":email,"message":message,"subject":f"OCR {query} Answers"}})     
+                    RaspEmail.send(**{"email":email,"message":message,"subject":f"OCR {query} Answers"})
                     user_from_db.update({"emailsleft":int(user_from_db["emailsleft"])-1})
                     importcsv.db.studentsubscriptions.update_one({"email": current_user}, {"$set": user_from_db},upsert=True)
                     result = {"scienceocranswers": answerlink,"emailcount":int(user_from_db["emailsleft"])-1,"end_date_subscription":9999999}
@@ -917,7 +921,8 @@ async def physicsaqa(data : JSONStructure = None, authorization: str = Header(No
                     <p>{questionpaper}</p>
                     <p>{markscheme}</p>.
                     """
-                    response = requests.post("http://0.0.0.0:7860/raspsendemail",json={"raspsendemail":{"email":email,"message":message,"subject":f"PhysicsAqa Papers"}})
+                    #response = requests.post("http://0.0.0.0:7860/raspsendemail",json={"raspsendemail":{"email":email,"message":message,"subject":f"PhysicsAqa Papers"}})
+                    RaspEmail.send(**{"email":email,"message":message,"subject":f"PhysicsAqa Papers"})
                     #msg = Message(f"PhysicsAqa Papers", recipients=[email]) # "amari.lawal@gmail.com"
                     #msg.body = f"Mail from physicsaqaApi at {now}"
                     #msg.html = f"""
@@ -944,8 +949,8 @@ async def physicsaqa(data : JSONStructure = None, authorization: str = Header(No
                     <p>{questionpaper}</p>
                     <p>{markscheme}</p>.
                     """
-                    response = requests.post("http://0.0.0.0:7860/raspsendemail",json={"raspsendemail":{"email":email,"message":message,"subject":f"PhysicsAqa Papers"}})
-
+                    #response = requests.post("http://0.0.0.0:7860/raspsendemail",json={"raspsendemail":{"email":email,"message":message,"subject":f"PhysicsAqa Papers"}})
+                    RaspEmail.send(**{"email":email,"message":message,"subject":f"PhysicsAqa Papers"})
                     user_from_db.update({"emailsleft":int(user_from_db["emailsleft"])-1})
                     importcsv.db.studentsubscriptions.update_one({"email": current_user}, {"$set": user_from_db},upsert=True)
                     return {"physicsaqa":{"chapter":chapter,"topic":topic,"question paper":questionpaper,"markscheme":markscheme,"emailcount":int(user_from_db["emailsleft"])-1,"end_date_subscription":9999999}}
@@ -1027,7 +1032,8 @@ async def forgotpassword(data : JSONStructure = None, authorization: str = Heade
         access_token = secure_decode(data["email"]) #create_access_token(identity=data["email"])
         # store token in database temporarily
         now = datetime.now().strftime("%c")
-        response = requests.post("http://0.0.0.0:7860/raspsendemail",json={"raspsendemail":{"email":data["email"],"message":forgotpasswordemail(data["email"],access_token),"subject":f"RevsionBank Password Reset"}})
+        #response = requests.post("http://0.0.0.0:7860/raspsendemail",json={"raspsendemail":{"email":data["email"],"message":forgotpasswordemail(data["email"],access_token),"subject":f"RevsionBank Password Reset"}})
+        RaspEmail.send(**{"email":data["email"],"message":forgotpasswordemail(data["email"],access_token),"subject":f"RevsionBank Password Reset"})
         #msg = Message(f"RevsionBank Password Reset", recipients=[data["email"]]) # "amari.lawal@gmail.com"
         #msg.body = f"Mail from RevisionBank at {now}"
         #msg.html = forgotpasswordemail(data["email"],access_token)
