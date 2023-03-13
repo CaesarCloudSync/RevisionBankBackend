@@ -963,7 +963,6 @@ async def signup(data: JSONStructure = None):
     try:
         signupdata = {}
         data = dict(data)
-        print(data)
         hashed = hashlib.sha256(data["password"].encode('utf-8')).hexdigest()
         signupdata["email"] = data["email"]
         signupdata["password"] = hashed
