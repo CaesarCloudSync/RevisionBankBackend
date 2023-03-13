@@ -959,7 +959,7 @@ async def physicsaqa(data : JSONStructure = None, authorization: str = Header(No
 
 
 @app.post('/signupapi') # POST
-async def signup(data: RevisionBankAuth):
+async def signup(data: JSONStructure = None):
     try:
         data = dict(data)
         print(data)
@@ -985,7 +985,7 @@ async def signup(data: RevisionBankAuth):
         error_detected = {"error": "error occured","errortype":type(ex), "error": str(ex)}
         return error_detected
 @app.post('/loginapi') # POST
-async def login(login_details: RevisionBankAuth): # ,authorization: str = Header(None)
+async def login(login_details: JSONStructure = None): # ,authorization: str = Header(None)
     # Login API
     try:
         def provide_access_token(login_details,student=0):
