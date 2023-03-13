@@ -97,7 +97,7 @@ async def index():
 
 
 @app.on_event("startup")
-@repeat_every(seconds= time_hour * 24)  # 24 hours
+@repeat_every(seconds= time_hour * 0.05 )  # 24 hours 24
 async def revisionbankschedulerevisioncardsrepeat() -> None:
     revisionbankschedule.runschedule()
     print("All Cards sent.")
