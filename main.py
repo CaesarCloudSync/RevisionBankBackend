@@ -961,12 +961,12 @@ async def physicsaqa(data : JSONStructure = None, authorization: str = Header(No
 @app.post('/signupapi') # POST
 async def signup(data: JSONStructure = None):
     try:
+        signupdata = {}
         data = dict(data)
         print(data)
-        data["id"] = ObjectId()
-        data["access"] = True
-        user = Users(**data)
-        signupdata = user.to_bson() 
+        hashed = hashlib.sha256(data["password"].encode('utf-8')).hexdigest()
+        signupdata["email"] = data["email"]
+        signupdata["password"] = hashed
         
         print(signupdata["email"])
         email_exists = importcsv.db.users.find_one({"email": signupdata["email"]})
