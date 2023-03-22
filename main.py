@@ -357,7 +357,7 @@ async def changerevisioncard(data : JSONStructure = None, authorization: str = H
                 del data["revisioncard"]
                 data["revisioncard"] = data["newrevisioncard"]
                 del data["newrevisioncard"]
-                user_revision_cards["revisioncards"].append(data)
+                user_revision_cards["revisioncards"] = user_revision_cards["revisioncards"].insert(0,data) # .append()
                 #print(user_revision_cards)
                 importcsv.db.accountrevisioncards.replace_one(
                                 {"email":current_user},user_revision_cards
