@@ -338,24 +338,12 @@ async def changerevisioncard(data : JSONStructure = None, authorization: str = H
                 user_revision_cards = list(importcsv.db.accountrevisioncards.find({"email": current_user}))[0]
                 for card in user_revision_cards["revisioncards"]:
                     oldcard = {i:data[i] for i in data if i!='newrevisioncard'}
-                    tempimgname =  card["revisioncardimgname"]
-                    tempimg = card["revisioncardimage"]
-                    try:
-                        del card["translation"]
-                        del card["revisioncardimgname"]
-                        del card["revisioncardimage"]
-                    except KeyError as kex:
-                        pass
+
+                    oldcard["translation"] = card["translation"]    
+                    oldcard["revisioncardimgname"] = card["revisioncardimgname"]    
+                    oldcard["revisioncardimage"] = card["revisioncardimage"]     
                     if card == oldcard:
-                        card["revisioncardimgname"] = tempimgname
-                        card["revisioncardimage"] = tempimg
-                        card["translate"] = ""
-
-
                         user_revision_cards["revisioncards"].remove(card)
-                    card["revisioncardimgname"] = tempimgname
-                    card["revisioncardimage"] = tempimg
-                    card["translate"] = ""
 
                 #print(user_revision_cards)
                 del data["revisioncard"]
