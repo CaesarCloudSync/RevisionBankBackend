@@ -325,12 +325,7 @@ async def changerevisioncard(data : JSONStructure = None, authorization: str = H
                 if user_scheduled_cards:
                     for card in user_scheduled_cards["revisioncards"]:
                         oldcard = {i:data[i] for i in data if i!='newrevisioncard'}
-                        try:
-                            del card["translation"]
-                            del card["revisioncardimgname"]
-                            del card["revisioncardimage"]
-                        except KeyError as kex:
-                            pass
+
                         if card == oldcard:
                             user_scheduled_cards["revisioncards"].remove(card)
                     #importcsv.db.scheduledcards.delete_many({"email":current_user})
@@ -343,6 +338,12 @@ async def changerevisioncard(data : JSONStructure = None, authorization: str = H
                 user_revision_cards = list(importcsv.db.accountrevisioncards.find({"email": current_user}))[0]
                 for card in user_revision_cards["revisioncards"]:
                     oldcard = {i:data[i] for i in data if i!='newrevisioncard'}
+                    try:
+                        del card["translation"]
+                        del card["revisioncardimgname"]
+                        del card["revisioncardimage"]
+                    except KeyError as kex:
+                        pass
                     if card == oldcard:
                         user_revision_cards["revisioncards"].remove(card)
                 #print(user_revision_cards)
