@@ -339,10 +339,12 @@ async def changerevisioncard(data : JSONStructure = None, authorization: str = H
                     oldcard = {i:data[i] for i in data if i!='newrevisioncard'}
                     if card == oldcard:
                         user_revision_cards["revisioncards"].remove(card)
+                print(user_revision_cards)
                 del data["revisioncard"]
                 data["revisioncard"] = data["newrevisioncard"]
                 del data["newrevisioncard"]
                 user_revision_cards["revisioncards"].append(data)
+                print(user_revision_cards)
                 importcsv.db.accountrevisioncards.replace_one(
                                 {"email":current_user},user_revision_cards
                                 )
