@@ -289,12 +289,14 @@ async def changesendtoemail(data : JSONStructure = None, authorization: str = He
                 scheduled_exists = importcsv.db.scheduledcards.find_one({"email":current_user})
                 if scheduled_exists:
                     user_scheduled_cards = list(importcsv.db.scheduledcards.find({"email": current_user}))[0]
-                    importcsv.db.scheduledcards.delete_many(user_scheduled_cards)
+                    #importcsv.db.scheduledcards.delete_many(user_scheduled_cards)
                     del user_scheduled_cards["sendtoemail"]
                     sendtoemailscheduled = user_scheduled_cards["sendtoemail"]
                     user_scheduled_cards.update({"sendtoemail": sendtoemailscheduled})
-                    importcsv.db.scheduledcards.insert_one(user_scheduled_cards)
-
+                    #importcsv.db.scheduledcards.insert_one(user_scheduled_cards)
+                    importcsv.db.scheduledcards.replace_one(
+                    {"email":current_user},user_scheduled_cards
+                )
 
                 user_revision_cards = list(importcsv.db.accountrevisioncards.find({"email": current_user}))[0]
                 #importcsv.db.accountrevisioncards.delete_many(user_revision_cards)
@@ -393,16 +395,22 @@ async def removerevisioncard(data : JSONStructure = None, authorization: str = H
                 for card in user_revision_cards["revisioncards"]:
                     if card == data:
                         user_revision_cards["revisioncards"].remove(card)
-                importcsv.db.accountrevisioncards.delete_many({"email":current_user})
-                importcsv.db.accountrevisioncards.insert_one(user_revision_cards)
+                #importcsv.db.accountrevisioncards.delete_many({"email":current_user})
+                #importcsv.db.accountrevisioncards.insert_one(user_revision_cards)
+                importcsv.db.accountrevisioncards.replace_one(
+                    {"email":current_user},user_revision_cards
+                )
                 # Remove the revision card from the scheduled cards
                 try:
                     user_scheduled_cards = list(importcsv.db.scheduledcards.find({"email": current_user}))[0]
                     for card in user_scheduled_cards["revisioncards"]:
                         if card == data:
                             user_scheduled_cards["revisioncards"].remove(card)
-                    importcsv.db.scheduledcards.delete_many({"email":current_user})
-                    importcsv.db.scheduledcards.insert_one(user_scheduled_cards)
+                    #importcsv.db.scheduledcards.delete_many({"email":current_user})
+                    #importcsv.db.scheduledcards.insert_one(user_scheduled_cards)
+                    importcsv.db.scheduledcards.replace_one(
+                    {"email":current_user},user_scheduled_cards
+                )
                     return {"message":"revision card removed"}
                 except IndexError as iex:
                     return {"message":"revision card removed"}
@@ -430,8 +438,11 @@ async def schedulerevisioncard(data : JSONStructure = None, authorization: str =
                     user_scheduled_cards["revisioncards"] = new_cards # Updates the list.
                     del user_scheduled_cards["_id"]
                     user_scheduled_cards["email"] = current_user # Sets the email to the current user.
-                    importcsv.db.scheduledcards.delete_many({"email":current_user}) # Allows data to be updated.
-                    importcsv.db.scheduledcards.insert_one(user_scheduled_cards) # Inserts the new data.
+                    #importcsv.db.scheduledcards.delete_many({"email":current_user}) # Allows data to be updated.
+                    #importcsv.db.scheduledcards.insert_one(user_scheduled_cards) # Inserts the new data.
+                    importcsv.db.scheduledcards.replace_one(
+                    {"email":current_user},user_scheduled_cards
+                )
                     return {"message":"revision cards scheduled"}
                 elif cards_not_exist == []: # If the cards are already in the database, return a message.
                     return {"message":"revision cards already scheduled"}
@@ -452,8 +463,11 @@ async def unscheduleallrevisioncard(authorization: str = Header(None)):
             if email_exists:  # Checks if email exists
                 user_revision_cards = list(importcsv.db.scheduledcards.find({"email": current_user}))[0]
                 user_revision_cards["revisioncards"] = []
-                importcsv.db.scheduledcards.delete_many({"email":current_user})
-                importcsv.db.scheduledcards.insert_one(user_revision_cards)
+                #importcsv.db.scheduledcards.delete_many({"email":current_user})
+                #importcsv.db.scheduledcards.insert_one(user_revision_cards)
+                importcsv.db.scheduledcards.replace_one(
+                    {"email":current_user},user_revision_cards
+                )
                 return {"message":"Allrevision card unscheduled"}
         except Exception as ex:
             return {f"error":f"{type(ex)},{str(ex)}"}
@@ -470,8 +484,11 @@ async def unschedulerevisioncard(data : JSONStructure = None, authorization: str
                 for card in user_revision_cards["revisioncards"]:
                     if card == data:
                         user_revision_cards["revisioncards"].remove(card)
-                importcsv.db.scheduledcards.delete_many({"email":current_user})
-                importcsv.db.scheduledcards.insert_one(user_revision_cards)
+                #importcsv.db.scheduledcards.delete_many({"email":current_user})
+                #importcsv.db.scheduledcards.insert_one(user_revision_cards)
+                importcsv.db.scheduledcards.replace_one(
+                    {"email":current_user},user_revision_cards
+                )
                 return {"message":"revision card unscheduled"}
         except Exception as ex:
             return {f"error":f"{type(ex)},{str(ex)}"}
@@ -1063,11 +1080,14 @@ async def resetpassword(data : JSONStructure = None, authorization: str = Header
                 user_from_db = list(importcsv.db.users.find({"email": current_user}))[0]
                 #print(user_from_db)
                 # TODO Delete password from here and replace.
-                importcsv.db.users.delete_many(user_from_db)
+                #importcsv.db.users.delete_many(user_from_db)
                 del user_from_db["password"]
                 encrypted_password = hashlib.sha256(data["password"].encode('utf-8')).hexdigest()
                 user_from_db.update({"password": encrypted_password})
-                importcsv.db.users.insert_one(user_from_db)
+                #importcsv.db.users.insert_one(user_from_db)
+                importcsv.db.users.replace_one(
+                    {"email":current_user},user_from_db
+                )
                 return {"message": "Password reset successful."}
             elif not email_exists:
                 return {"message": "Email Doesn't exist."}
@@ -1277,10 +1297,13 @@ async def getstudentsubscriptions(authorization: str = Header(None)):
             for student in student_user_from_db:
                 del student["_id"], student["password"],student["hostemail"],student['subscription']
             
-            importcsv.db.users.delete_many(user_from_db) # Deletes the data in order to update it.
+            #importcsv.db.users.delete_many(user_from_db) # Deletes the data in order to update it.
             del user_from_db["numofaccounts"] # Deletes the numofaccounts to update it.
             user_from_db.update({"numofaccounts": 200 - len(student_user_from_db)}) # Updates the number of accounts
-            importcsv.db.users.insert_one(user_from_db) # inserts updated data into the host emails account
+            #importcsv.db.users.insert_one(user_from_db) # inserts updated data into the host emails account
+            importcsv.db.users.replace_one(
+                    {"email":current_user},user_from_db
+                )
             return {"result":student_user_from_db}
         except Exception as ex:
             return {"error": f"{type(ex)}-{ex}"}
@@ -1321,11 +1344,14 @@ async def changestudentpassword(data : JSONStructure = None, authorization: str 
             if hostkey and studentkey:
                 student_user_from_db = list(importcsv.db.studentsubscriptions.find({"email": data["studentemail"]}))[0]
                 # TODO Delete password from here and replace.
-                importcsv.db.studentsubscriptions.delete_many(student_user_from_db)
+                #importcsv.db.studentsubscriptions.delete_many(student_user_from_db)
                 del student_user_from_db["password"]
                 encrypted_password = hashlib.sha256(data["password"].encode('utf-8')).hexdigest()
                 student_user_from_db.update({"password": encrypted_password})
-                importcsv.db.studentsubscriptions.insert_one(student_user_from_db)
+                importcsv.db.studentsubscriptions.replace_one(
+                    {"email":current_user},student_user_from_db
+                )
+                #importcsv.db.studentsubscriptions.insert_one(student_user_from_db)
                 return {"message": "Password reset successful."}
             else:
                 return {"error": "Student account does not exist."}
@@ -1361,7 +1387,7 @@ async def deletesubscription(authorization: str = Header(None)):
     if current_user:
         try:
             user_from_db = list(importcsv.db.users.find({"email": current_user}))[0]
-            importcsv.db.users.delete_many(user_from_db)
+            #importcsv.db.users.delete_many(user_from_db)
             if "end_date_subscription" in user_from_db:
                 del user_from_db["end_date_subscription"]
             if "start_date_subscription" in user_from_db:
@@ -1372,7 +1398,10 @@ async def deletesubscription(authorization: str = Header(None)):
                 del user_from_db["emailsleft"]
             if "numofaccounts" in user_from_db:
                 del user_from_db["numofaccounts"]
-            importcsv.db.users.update_one( { "email": current_user}, {"$set": user_from_db}, upsert = True )
+            importcsv.db.users.replace_one(
+                    {"email":current_user},user_from_db
+                )
+            #importcsv.db.users.update_one( { "email": current_user}, {"$set": user_from_db}, upsert = True )
 
             return {"message":"Subscription deleted from expiration"}
         except Exception as ex:
