@@ -291,11 +291,14 @@ async def changesendtoemail(data : JSONStructure = None, authorization: str = He
 
 
                 user_revision_cards = list(importcsv.db.accountrevisioncards.find({"email": current_user}))[0]
-                importcsv.db.accountrevisioncards.delete_many(user_revision_cards)
+                #importcsv.db.accountrevisioncards.delete_many(user_revision_cards)
                 del user_revision_cards["sendtoemail"]
                 sendtoemail = data["sendtoemail"]
                 user_revision_cards.update({"sendtoemail": sendtoemail})
-                importcsv.db.accountrevisioncards.insert_one(user_revision_cards)
+                importcsv.db.accountrevisioncards.replace_one(
+            {"email":current_user},user_revision_cards
+            )
+                #importcsv.db.accountrevisioncards.insert_one(user_revision_cards)
                 return {"message": "Send to email changed."}
             elif not email_exists:
                 return {"message":"email does not exist"}
