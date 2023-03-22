@@ -347,12 +347,16 @@ async def changerevisioncard(data : JSONStructure = None, authorization: str = H
                     except KeyError as kex:
                         pass
                     if card == oldcard:
+                        card["revisioncardimgname"] = tempimgname
+                        card["revisioncardimage"] = tempimg
+                        card["translate"] = ""
 
 
                         user_revision_cards["revisioncards"].remove(card)
                     card["revisioncardimgname"] = tempimgname
                     card["revisioncardimage"] = tempimg
                     card["translate"] = ""
+
                 #print(user_revision_cards)
                 del data["revisioncard"]
                 data["revisioncard"] = data["newrevisioncard"]
