@@ -352,6 +352,7 @@ async def changerevisioncard(data : JSONStructure = None, authorization: str = H
                 #importcsv.db.accountrevisioncards.insert_one(user_revision_cards)
                 return {"message":"revision card changed."}
         except Exception as ex:
+            print({f"error":f"{type(ex)},{str(ex)}"})
             return {f"error":f"{type(ex)},{str(ex)}"}
 
 
