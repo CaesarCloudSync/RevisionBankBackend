@@ -264,7 +264,9 @@ async def storerevisioncards(data : JSONStructure = None, authorization: str = H
                     user_revision_cards["email"] = current_user # Sets the email to the current user.
                     #importcsv.db.accountrevisioncards.delete_many({"email":current_user}) # Allows data to be updated.
                     #importcsv.db.accountrevisioncards.insert_one(user_revision_cards) # Inserts the new data.
-                    
+                    importcsv.db.accountrevisioncards.replace_one(
+                    {"email":current_user},user_revision_cards
+                )
                     return {"message":"revision cards updated"}
                 elif cards_not_exist == []: # If the cards are already in the database, return a message.
                     return {"message":"No new cards"}
