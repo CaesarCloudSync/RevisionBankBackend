@@ -339,12 +339,12 @@ async def changerevisioncard(data : JSONStructure = None, authorization: str = H
                     oldcard = {i:data[i] for i in data if i!='newrevisioncard'}
                     if card == oldcard:
                         user_revision_cards["revisioncards"].remove(card)
-                print(user_revision_cards)
+                #print(user_revision_cards)
                 del data["revisioncard"]
                 data["revisioncard"] = data["newrevisioncard"]
                 del data["newrevisioncard"]
                 user_revision_cards["revisioncards"].append(data)
-                print(user_revision_cards)
+                #print(user_revision_cards)
                 importcsv.db.accountrevisioncards.replace_one(
                                 {"email":current_user},user_revision_cards
                                 )
@@ -352,7 +352,7 @@ async def changerevisioncard(data : JSONStructure = None, authorization: str = H
                 #importcsv.db.accountrevisioncards.insert_one(user_revision_cards)
                 return {"message":"revision card changed."}
         except Exception as ex:
-            print({f"error":f"{type(ex)},{str(ex)}"})
+            #print({f"error":f"{type(ex)},{str(ex)}"})
             return {f"error":f"{type(ex)},{str(ex)}"}
 
 
