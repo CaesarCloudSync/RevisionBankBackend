@@ -7,7 +7,8 @@ with open("tets.json","r") as f:
     user_revision_cards = json.load(f)
 with open("input.json") as f:
     data = json.load(f)
-#importcsv.db.accountrevisioncards.insert_one(data)
+#importcsv.db.accountrevisioncards.insert_one(user_revision_cards)
+
 left_over_images = []
 for card in user_revision_cards["revisioncards"]:
     oldcard = {i:data[i] for i in data if i!='newrevisioncard'}
@@ -18,6 +19,7 @@ for card in user_revision_cards["revisioncards"]:
 
     if card == oldcard:
         user_revision_cards["revisioncards"].remove(card)
+        left_over_images.append({"revisioncardimgname":card["revisioncardimgname"],"revisioncardimage":card["revisioncardimage"] })
 
 
 
@@ -26,6 +28,5 @@ del data["revisioncard"]
 data["revisioncard"] = data["newrevisioncard"]
 del data["newrevisioncard"]
 user_revision_cards["revisioncards"].insert(0,data) # .append()
-for rev in user_revision_cards["revisioncards"]:
-    print(rev)
-                #importcsv.db.accountrevisioncards.delete_many({"email":current_user}
+
+                    #importcsv.db.accountrevisioncards.delete_many({"email":current_user}

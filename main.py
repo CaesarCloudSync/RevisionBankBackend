@@ -336,6 +336,7 @@ async def changerevisioncard(data : JSONStructure = None, authorization: str = H
                 
 
                 user_revision_cards = list(importcsv.db.accountrevisioncards.find({"email": current_user}))[0]
+                left_over_image = []
                 for card in user_revision_cards["revisioncards"]:
                     oldcard = {i:data[i] for i in data if i!='newrevisioncard'}
 
@@ -344,9 +345,13 @@ async def changerevisioncard(data : JSONStructure = None, authorization: str = H
                     oldcard["revisioncardimage"] = card["revisioncardimage"]     
                     if card == oldcard:
                         user_revision_cards["revisioncards"].remove(card)
+                        left_over_image.append({"revisioncardimgname":card["revisioncardimgname"],"revisioncardimage":card["revisioncardimage"] })
 
                 #print(user_revision_cards)
                 del data["revisioncard"]
+                data["revisioncardimgname"] = left_over_image[0]["revisioncardimgname"]
+                data["revisioncardimage"] = left_over_image[0]["revisioncardimage"]
+
                 data["revisioncard"] = data["newrevisioncard"]
                 del data["newrevisioncard"]
                 user_revision_cards["revisioncards"].insert(0,data) # .append()
