@@ -349,6 +349,7 @@ async def changerevisioncard(data : JSONStructure = None, authorization: str = H
 
                 #print(user_revision_cards)
                 del data["revisioncard"]
+                data["translation"] = ""
                 data["revisioncardimgname"] = left_over_image[0]["revisioncardimgname"]
                 data["revisioncardimage"] = left_over_image[0]["revisioncardimage"]
 
