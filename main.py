@@ -321,19 +321,21 @@ async def changerevisioncard(data : JSONStructure = None, authorization: str = H
             email_exists = importcsv.db.accountrevisioncards.find_one({"email":current_user})
             if email_exists:  # Checks if email exists
                 # TODO Slightly buggy here - removes old schedule from the database.
-                user_scheduled_cards = list(importcsv.db.scheduledcards.find({"email": current_user}))[0]
-                if user_scheduled_cards:
-                    for card in user_scheduled_cards["revisioncards"]:
-                        oldcard = {i:data[i] for i in data if i!='newrevisioncard'}
+                scheduled_exists = importcsv.db.scheduledcards.find_one({"email":current_user})
+                if scheduled_exists:
+                    user_scheduled_cards = list(importcsv.db.scheduledcards.find({"email": current_user}))[0]
+                    if user_scheduled_cards :
+                        for card in user_scheduled_cards["revisioncards"]:
+                            oldcard = {i:data[i] for i in data if i!='newrevisioncard'}
 
-                        if card == oldcard:
-                            user_scheduled_cards["revisioncards"].remove(card)
-                    #importcsv.db.scheduledcards.delete_many({"email":current_user})
-                    #importcsv.db.scheduledcards.insert_one(user_scheduled_cards)
-                    importcsv.db.scheduledcards.replace_one(
-                                {"email":current_user},user_scheduled_cards
-                                )
-                
+                            if card == oldcard:
+                                user_scheduled_cards["revisioncards"].remove(card)
+                        #importcsv.db.scheduledcards.delete_many({"email":current_user})
+                        #importcsv.db.scheduledcards.insert_one(user_scheduled_cards)
+                        importcsv.db.scheduledcards.replace_one(
+                                    {"email":current_user},user_scheduled_cards
+                                    )
+                    
 
                 user_revision_cards = list(importcsv.db.accountrevisioncards.find({"email": current_user}))[0]
                 left_over_image = []

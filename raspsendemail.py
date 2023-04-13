@@ -17,6 +17,7 @@ class RaspEmail:
 
 
         # Turn these into plain/html MIMEText objects
+        print(message)
         part1 = MIMEText(message, "html")
 
         # Add HTML/plain-text parts to MIMEMultipart message.
@@ -50,7 +51,7 @@ class RaspEmail:
         with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context) as server:
             server.login(sender_email, password)
             server.sendmail(
-                sender_email, receiver_email, message.as_string()
+                sender_email, email, message.as_string()
             )
     @staticmethod
     def send_attachment(receiver_email,subject,filename,htmlmessage):
@@ -93,3 +94,6 @@ class RaspEmail:
         with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context) as server:
             server.login(sender_email, password)
             server.sendmail(sender_email, receiver_email, text)
+if __name__ == "__main__":
+    RaspEmail.send(email="amari.lawal@gmail.com",subject="RevisionBank",message="<h1>Hello World</h1>")
+    #(**{"email":"amari.lawal@gmail.com","message":"Hello","subject":f"PhysicsAqa Papers"})
