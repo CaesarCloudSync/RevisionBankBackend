@@ -324,7 +324,7 @@ async def changerevisioncard(data : JSONStructure = None, authorization: str = H
                 scheduled_exists = importcsv.db.scheduledcards.find_one({"email":current_user})
                 if scheduled_exists:
                     user_scheduled_cards = list(importcsv.db.scheduledcards.find({"email": current_user}))[0]
-                    if user_scheduled_cards :
+                    if user_scheduled_cards:
                         for card in user_scheduled_cards["revisioncards"]:
                             oldcard = {i:data[i] for i in data if i!='newrevisioncard'}
 
