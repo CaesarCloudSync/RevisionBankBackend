@@ -7,7 +7,13 @@ from email.mime.text import MIMEText
 
 class RaspEmail:
     @staticmethod
-    def send(email,subject,message,attachment=None):
+    def send(**kwargs):
+        email,subject,htmlmessage = kwargs["email"],kwargs["subject"],kwargs["message"]
+        try:
+            attachment = kwargs["attachment"]
+        except KeyError as kex:
+            attachment = None
+        #print(email,subject,message)
         sender_email = "revisionbankedu@gmail.com"
         message = MIMEMultipart("alternative")
         message["Subject"] = subject
@@ -17,8 +23,7 @@ class RaspEmail:
 
 
         # Turn these into plain/html MIMEText objects
-        print(message)
-        part1 = MIMEText(message, "html")
+        part1 = MIMEText(htmlmessage, "html")
 
         # Add HTML/plain-text parts to MIMEMultipart message.
         # The email client will try to render the last part first
