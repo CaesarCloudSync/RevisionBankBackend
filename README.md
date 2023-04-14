@@ -1,5 +1,5 @@
 ---
-title: RevisionBank
+title: RevB-Backend
 emoji: 📖
 colorFrom: indigo
 colorTo: gray
