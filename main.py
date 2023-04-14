@@ -103,6 +103,18 @@ async def revisionbankschedulerevisioncardsrepeat() -> None:
     revisionbankschedule.runschedule()
     print("All Cards sent.")
 
+@app.post("/revisionbanksendemail") # POST # allow all origins all methods.
+async def revisionbanksendemail(data : JSONStructure = None):  
+    try:
+        data = dict(data)#request.get_json()
+        try:
+            attachment = data["attachment"]
+        except KeyError as kex:
+            attachment = None
+        RaspEmail.send(**{"email":data["email"],"message":data["message"],"subject":data["subject"],"attachment":attachment})
+        return {"message":"email has been sent."}
+    except Exception as ex:
+        return {"error":f"{type(ex)}-{ex}"}
 @app.post("/revisionbankstripepayment") # POST # allow all origins all methods.
 async def revisionbankstripepayment(data : JSONStructure = None, authorization: str = Header(None)):  
     current_user = secure_decode(authorization.replace("Bearer ",""))["email"] # outputs the email of the user example@gmail.com
