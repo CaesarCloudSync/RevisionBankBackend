@@ -546,6 +546,7 @@ async def sendnowrevisioncard(data : JSONStructure = None, authorization: str = 
             #mail.send(msg)
             return {"message":"revision card sent"}
     except Exception as ex:
+        print({f"error":f"{type(ex)},{str(ex)}"})
         return {f"error":f"{type(ex)},{str(ex)}"}
 @app.get('/checkschedulerevisioncard')# GET # allow all origins all methods.
 async def checkschedulerevisioncard(authorization: str = Header(None)):
