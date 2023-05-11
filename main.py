@@ -26,6 +26,7 @@ import stripe
 import jwt
 #import cv2
 from fastapi.responses import StreamingResponse
+from fastapi import WebSocket,WebSocketDisconnect
 import re
 import jwt
 from fastapi import FastAPI, Header
@@ -391,12 +392,6 @@ async def getrevisioncards(authorization: str = Header(None)):
             #print(revisioncard)
             revisioncard.update({"revisionscheduleinterval":revisioncard["revisionscheduleinterval"]})
             yield json.dumps(revisioncard)
-
-
-
-
-    #
-
     current_user = secure_decode(authorization.replace("Bearer ",""))["email"]
     if current_user:
         try:
@@ -410,6 +405,44 @@ async def getrevisioncards(authorization: str = Header(None)):
                 return {"message":"No revision cards"} # Send in shape of data
         except Exception as ex:
             return {f"error":f"{type(ex)},{str(ex)}"}
+@app.websocket("/getrevisioncardsws")
+async def getrevisioncardsws(websocket: WebSocket):
+    await websocket.accept()
+
+    try:
+        while True:
+            authinfo = await websocket.receive_json()
+            authorization = authinfo["headers"]["Authorization"]
+            current_user = secure_decode(authorization.replace("Bearer ",""))["email"]
+            if current_user:
+                try:
+                    email_exists = importcsv.db.accountrevisioncards.find_one({"email":current_user})
+                    if email_exists:  # Checks if email exists
+                        user_revision_cards = list(importcsv.db.accountrevisioncards.find({"email": current_user}))[0]
+                        del user_revision_cards["_id"],user_revision_cards["email"]
+                        #return StreamingResponse(iter_df(user_revision_cards), media_type="application/json")
+                        #return user_revision_cards
+                        for revisioncard in user_revision_cards["revisioncards"]:
+                            revisioncard.update({"revisionscheduleinterval":user_revision_cards["revisionscheduleinterval"],"sendtoemail":user_revision_cards["sendtoemail"]})
+                            await websocket.send_json(json.dumps(revisioncard)) # sends the buffer as bytes
+                    elif not email_exists:
+                        await websocket.send_json(json.dumps({"message":"No revision cards"}))
+                        #return {"message":"No revision cards"} # Send in shape of data
+                except Exception as ex:
+                    return {f"error":f"{type(ex)},{str(ex)}"}
+            elif not current_user:
+                await websocket.send_json(json.dumps({"message":"No user."}))
+            
+                    
+
+
+    except WebSocketDisconnect:
+        print("Client disconnected")
+
+
+
+
+
 @app.post('/uploadrevisioncardtxtfile') # POST # allow all origins all methods.
 async def uploadrevisioncardtxtfile(data : JSONStructure = None, authorization: str = Header(None)):
     try:
