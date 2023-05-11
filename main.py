@@ -404,8 +404,8 @@ async def getrevisioncards(authorization: str = Header(None)):
             if email_exists:  # Checks if email exists
                 user_revision_cards = list(importcsv.db.accountrevisioncards.find({"email": current_user}))[0]
                 del user_revision_cards["_id"],user_revision_cards["email"]
-                return StreamingResponse(iter_df(user_revision_cards), media_type="application/json")
-                #return user_revision_cards
+                #return StreamingResponse(iter_df(user_revision_cards), media_type="application/json")
+                return user_revision_cards
             elif not email_exists:
                 return {"message":"No revision cards"} # Send in shape of data
         except Exception as ex:
