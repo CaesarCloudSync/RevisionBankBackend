@@ -25,6 +25,7 @@ import json
 import stripe
 import jwt
 #import cv2
+from fastapi.responses import StreamingResponse
 import re
 import jwt
 from fastapi import FastAPI, Header
@@ -385,6 +386,17 @@ async def changerevisioncard(data : JSONStructure = None, authorization: str = H
             
 @app.get('/getrevisioncards')# GET # allow all origins all methods.
 async def getrevisioncards(authorization: str = Header(None)):
+    def iter_df(user_revision_cards):
+        for revisioncard in user_revision_cards["revisioncards"]:
+            #print(revisioncard)
+            revisioncard.update({"revisionscheduleinterval":revisioncard["revisionscheduleinterval"]})
+            yield json.dumps(revisioncard)
+
+
+
+
+    #
+
     current_user = secure_decode(authorization.replace("Bearer ",""))["email"]
     if current_user:
         try:
@@ -392,7 +404,8 @@ async def getrevisioncards(authorization: str = Header(None)):
             if email_exists:  # Checks if email exists
                 user_revision_cards = list(importcsv.db.accountrevisioncards.find({"email": current_user}))[0]
                 del user_revision_cards["_id"],user_revision_cards["email"]
-                return user_revision_cards
+                return StreamingResponse(iter_df(user_revision_cards), media_type="application/json")
+                #return user_revision_cards
             elif not email_exists:
                 return {"message":"No revision cards"} # Send in shape of data
         except Exception as ex:
