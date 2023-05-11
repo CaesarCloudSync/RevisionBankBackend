@@ -390,7 +390,7 @@ async def getrevisioncards(authorization: str = Header(None)):
         for revisioncard in user_revision_cards["revisioncards"]:
             #print(revisioncard)
             revisioncard.update({"revisionscheduleinterval":revisioncard["revisionscheduleinterval"]})
-            yield json.dumps(revisioncard)
+            yield {"revisioncards":[json.dumps(revisioncard)]}
 
 
 
