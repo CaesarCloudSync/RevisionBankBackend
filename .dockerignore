@@ -1,0 +1,15 @@
+# flyctl launch added from .gitignore
+**\*.json
+**\revisionbankenv
+**\exampleimage.json
+**\Procfile
+**\yes
+**\yes.pub
+**\test.js
+**\test.py
+**\test3.py
+**\test4.py
+**\mydata.json
+**\.space
+**\revisionbankscheduler
+fly.toml
