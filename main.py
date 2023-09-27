@@ -1522,7 +1522,7 @@ async def getedexcelpapers(authorization: str = Header(None)):
         return {"error":f"{type(ex)},ex"}
 
 async def main():
-    config = uvicorn.Config("main:app", port=7860, log_level="info",host="0.0.0.0",reload=True)
+    config = uvicorn.Config("main:app", port=8000, log_level="info",host="0.0.0.0",reload=True)
     server = uvicorn.Server(config)
     await server.serve()
 
