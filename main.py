@@ -62,7 +62,7 @@ JWT_ALGORITHM = "HS256"
 JSONObject = Dict[Any, Any]
 JSONArray = List[Any]
 JSONStructure = Union[JSONArray, JSONObject]
-time_hour = 60 * 60 # 1 hour,
+time_hour = (60 * 60) * 3 # 1 hour, * 3 hours
 def secure_encode(token):
     # if we want to sign/encrypt the JSON object: {"hello": "world"}, we can do it as follows
     # encoded = jwt.encode({"hello": "world"}, JWT_SECRET, algorithm=JWT_ALGORITHM)
