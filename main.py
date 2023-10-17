@@ -10,7 +10,6 @@ from flask import Flask, app, jsonify, request
 from flask_cors import CORS, cross_origin
 from flask_mail import Mail, Message
 from physicsaqa import PhysicsAQA
-from config import Config
 from flask_jwt_extended import JWTManager, jwt_required, create_access_token, get_jwt_identity
 from csv_to_db import ImportCSV
 from models import Users 
@@ -28,6 +27,7 @@ import jwt
 #import cv2
 from fastapi.responses import StreamingResponse
 from fastapi import WebSocket,WebSocketDisconnect
+
 import re
 import jwt
 from fastapi import FastAPI, Header
@@ -80,6 +80,17 @@ def getendsubscription(current_user):
     user_from_db = list(importcsv.db.users.find({"email": current_user}))[0]
     end_date = user_from_db["end_date_subscription"]
     return end_date
+def provide_access_token(login_details,student=0):
+    if student == 0:
+        email_exists = list(importcsv.db.users.find({"email": login_details["email"]}))[0]
+    elif student == 1:
+        email_exists = list(importcsv.db.studentsubscriptions.find({"email": login_details["email"]}))[0]
+    encrypted_password =  hashlib.sha256(login_details["password"].encode('utf-8')).hexdigest()
+    if email_exists["password"] == encrypted_password:
+        access_token = secure_encode({"email":email_exists["email"]}) #create_access_token(identity=email_exists["email"])
+        return access_token
+    else:
+        return "Wrong password"
 # Sending Emails from Heroku: https://blairconrad.com/2020/03/05/libraryhippo-2020-sending-email-from-heroku/
 # Send Email API: https://app.sendgrid.com/
 # Signin and Signup page: https://shayff.medium.com/building-your-first-flask-rest-api-with-mongodb-and-jwt-e03f2d317f04
@@ -437,6 +448,8 @@ async def getrevisioncardsws(websocket: WebSocket):
                     await websocket.send_json(json.dumps({"message":"No user."}))
     except ConnectionClosedError as cex:
         await websocket.send_json(json.dumps({"error":f"{type(cex)},{cex}"}))
+    except WebSocketDisconnect as wex:
+        pass
 
 
 
@@ -466,7 +479,9 @@ async def removerevisioncard(data : JSONStructure = None, authorization: str = H
             if email_exists:  # Checks if email exists
                 # Remove the revision card from the database.
                 user_revision_cards = list(importcsv.db.accountrevisioncards.find({"email": current_user}))[0]
+                del data["sendtoemail"],data["revisionscheduleinterval"]
                 for card in user_revision_cards["revisioncards"]:
+                    #print(data)
                     if card == data:
                         user_revision_cards["revisioncards"].remove(card)
                 #importcsv.db.accountrevisioncards.delete_many({"email":current_user})
@@ -1091,17 +1106,7 @@ async def signup(data: JSONStructure = None):
 async def login(login_details: JSONStructure = None): # ,authorization: str = Header(None)
     # Login API
     try:
-        def provide_access_token(login_details,student=0):
-            if student == 0:
-                email_exists = list(importcsv.db.users.find({"email": login_details["email"]}))[0]
-            elif student == 1:
-                email_exists = list(importcsv.db.studentsubscriptions.find({"email": login_details["email"]}))[0]
-            encrypted_password =  hashlib.sha256(login_details["password"].encode('utf-8')).hexdigest()
-            if email_exists["password"] == encrypted_password:
-                access_token = secure_encode({"email":email_exists["email"]}) #create_access_token(identity=email_exists["email"])
-                return access_token
-            else:
-                return "Wrong password"
+
 
 
         login_details = dict(login_details)
@@ -1125,12 +1130,12 @@ async def login(login_details: JSONStructure = None): # ,authorization: str = He
         return {"error": f"{type(ex)} {str(ex)}"}
     #
 @app.post('/forgotpassword') # POST
-async def forgotpassword(data : JSONStructure = None, authorization: str = Header(None)):
+async def forgotpassword(data : JSONStructure = None):
     # Login API
     data = dict(data)#request.get_json()
     try:
         #print(data["email"])
-        access_token = secure_decode(data["email"]) #create_access_token(identity=data["email"])
+        access_token = secure_encode({"email":data["email"]})#secure_decode(data["email"]) #create_access_token(identity=data["email"])
         # store token in database temporarily
         now = datetime.now().strftime("%c")
         #response = requests.post("http://0.0.0.0:7860/raspsendemail",json={"raspsendemail":{"email":data["email"],"message":forgotpasswordemail(data["email"],access_token),"subject":f"RevsionBank Password Reset"}})
