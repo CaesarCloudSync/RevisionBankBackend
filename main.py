@@ -486,11 +486,10 @@ async def removerevisioncard(data : JSONStructure = None, authorization: str = H
             if email_exists:  # Checks if email exists
                 # Remove the revision card from the database.
                 user_revision_cards = list(importcsv.db.accountrevisioncards.find({"email": current_user}))[0]
-                print(data["revisionscheduleinterval"])
-                del data["sendtoemail"]
+                #del data["sendtoemail"]
                 for card in user_revision_cards["revisioncards"]:
                     
-                    if card == data:
+                    if card['revisioncardtitle'] == data['revisioncardtitle'] and card["subject"] == data["subject"]:
                         user_revision_cards["revisioncards"].remove(card)
                 #importcsv.db.accountrevisioncards.delete_many({"email":current_user})
                 #importcsv.db.accountrevisioncards.insert_one(user_revision_cards)
@@ -498,24 +497,28 @@ async def removerevisioncard(data : JSONStructure = None, authorization: str = H
                     {"email":current_user},user_revision_cards
                 )
                 # Remove the revision card from the scheduled cards
-                try:
-                    user_scheduled_cards = list(importcsv.db.scheduledcards.find({"email": current_user}))[0]
-                    for card in user_scheduled_cards["revisioncards"]:
-                        scheduleId = card["scheduleId"] 
-                        del card["scheduleId"]
-                        if card == data:
-                            resp = requests.delete(f"https://qstash.upstash.io/v2/schedules/{scheduleId}",headers={"Authorization": f"Bearer {qstash_access_token}"})
-                            user_scheduled_cards["revisioncards"].remove(card)
-                    #importcsv.db.scheduledcards.delete_many({"email":current_user})
-                    #importcsv.db.scheduledcards.insert_one(user_scheduled_cards)
-                    importcsv.db.scheduledcards.replace_one(
-                    {"email":current_user},user_scheduled_cards
-                )
-                    return {"message":"revision card removed"}
-                except IndexError as iex:
-                    return {"message":"revision card removed"}
+                scheduled_exists = importcsv.db.scheduledcards.find_one({"email":current_user})
+                if scheduled_exists:
+                    try:
+                        user_scheduled_cards = list(importcsv.db.scheduledcards.find({"email": current_user}))[0]
+                        for card in user_scheduled_cards["revisioncards"]:                  
+                            scheduleId = card.get("scheduleId")
+                            if card['revisioncardtitle'] == data['revisioncardtitle'] and card["subject"] == data["subject"]:
+                                if scheduleId:
+                                    resp = requests.delete(f"https://qstash.upstash.io/v2/schedules/{scheduleId}",headers={"Authorization": f"Bearer {qstash_access_token}"})
+                                user_scheduled_cards["revisioncards"].remove(card)
+                        #importcsv.db.scheduledcards.delete_many({"email":current_user})
+                        #importcsv.db.scheduledcards.insert_one(user_scheduled_cards)
+                        importcsv.db.scheduledcards.replace_one(
+                        {"email":current_user},user_scheduled_cards
+                    )
+                        
+                    except IndexError as iex:
+                        return {"message":"revision card removed"}
+                return {"message":"revision card removed"}
 
         except Exception as ex:
+            print({f"error":f"{type(ex)},{str(ex)}"})
             return {f"error":f"{type(ex)},{str(ex)}"}
 @app.post('/schedulerevisioncard') # POST # allow all origins all methods.
 async def schedulerevisioncard(data : JSONStructure = None, authorization: str = Header(None)):
@@ -587,8 +590,10 @@ async def unscheduleallrevisioncard(authorization: str = Header(None)):
             if email_exists:  # Checks if email exists
                 user_revision_cards = list(importcsv.db.scheduledcards.find({"email": current_user}))[0]
                 for card in user_revision_cards["revisioncards"]:
-                    scheduleId = card["scheduleId"] 
-                    resp = requests.delete(f"https://qstash.upstash.io/v2/schedules/{scheduleId}",headers={"Authorization": f"Bearer {qstash_access_token}"})
+                    scheduleId = card.get("scheduleId")
+                    if scheduleId:
+                        del card["scheduleId"]
+                        resp = requests.delete(f"https://qstash.upstash.io/v2/schedules/{scheduleId}",headers={"Authorization": f"Bearer {qstash_access_token}"})
                 user_revision_cards["revisioncards"] = []
                 #importcsv.db.scheduledcards.delete_many({"email":current_user})
                 #importcsv.db.scheduledcards.insert_one(user_revision_cards)
@@ -609,10 +614,12 @@ async def unschedulerevisioncard(data : JSONStructure = None, authorization: str
 
                 user_revision_cards = list(importcsv.db.scheduledcards.find({"email": current_user}))[0]
                 for card in user_revision_cards["revisioncards"]:
-                    scheduleId = card["scheduleId"] 
-                    del card["scheduleId"]
-                    if card == data:
-                        resp = requests.delete(f"https://qstash.upstash.io/v2/schedules/{scheduleId}",headers={"Authorization": f"Bearer {qstash_access_token}"})
+                    scheduleId = card.get("scheduleId")
+                    if scheduleId:
+                        del card["scheduleId"]
+                    if card['revisioncardtitle'] == data['revisioncardtitle'] and card["subject"] == data["subject"]:
+                        if scheduleId:
+                            resp = requests.delete(f"https://qstash.upstash.io/v2/schedules/{scheduleId}",headers={"Authorization": f"Bearer {qstash_access_token}"})
                         user_revision_cards["revisioncards"].remove(card)
                 #importcsv.db.scheduledcards.delete_many({"email":current_user})
                 #importcsv.db.scheduledcards.insert_one(user_revision_cards)
@@ -1568,7 +1575,7 @@ async def getedexcelpapers(authorization: str = Header(None)):
         return {"error":f"{type(ex)},ex"}
 
 async def main():
-    config = uvicorn.Config("main:app", port=8000, log_level="info",host="0.0.0.0",reload=True)
+    config = uvicorn.Config("main:app", port=8080, log_level="info",host="0.0.0.0",reload=True)
     server = uvicorn.Server(config)
     await server.serve()
 
