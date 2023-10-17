@@ -1,0 +1,2 @@
+
+{'sendtoemail': 'amari.lawal@paconsulting.com', 'revisionscheduleinterval': 60, 'revisioncards': [{'subject': 'Test', 'revisioncardtitle': 'Test 4', 'revisioncard': 'ajksbcljma', 'translation': '', 'revisioncardimgname': [], 'revisioncardimage': [], 'revisionscheduleinterval': 60, 'sendtoemail': 'amari.lawal@paconsulting.com'}]}

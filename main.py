@@ -16,6 +16,8 @@ from models import Users
 from bson.objectid import ObjectId # 
 import hashlib
 import random
+from dotenv import load_dotenv
+load_dotenv(".env")
 from datetime import datetime
 from PIL import Image, ImageOps
 from io import BytesIO
@@ -58,7 +60,7 @@ revisionbankschedule = RevisionBankScheduler(importcsv)
 JWT_SECRET = "Peter Piper picked a peck of pickled peppers, A peck of pickled peppers Peter Piper picked, If Peter Piper picked a peck of pickled peppers,Where's the peck of pickled peppers Peter Piper picked" #'super-secret'
 # IRL we should NEVER hardcode the secret: it should be an evironment variable!!!
 JWT_ALGORITHM = "HS256"
-
+qstash_access_token = base64.b64decode(os.environ.get("QSTASH_ACCESS_TOKEN").encode()).decode()
 JSONObject = Dict[Any, Any]
 JSONArray = List[Any]
 JSONStructure = Union[JSONArray, JSONObject]
@@ -316,8 +318,8 @@ async def changesendtoemail(data : JSONStructure = None, authorization: str = He
                 if scheduled_exists:
                     user_scheduled_cards = list(importcsv.db.scheduledcards.find({"email": current_user}))[0]
                     #importcsv.db.scheduledcards.delete_many(user_scheduled_cards)
-                    del user_scheduled_cards["sendtoemail"]
                     sendtoemailscheduled = user_scheduled_cards["sendtoemail"]
+                    del user_scheduled_cards["sendtoemail"]
                     user_scheduled_cards.update({"sendtoemail": sendtoemailscheduled})
                     #importcsv.db.scheduledcards.insert_one(user_scheduled_cards)
                     importcsv.db.scheduledcards.replace_one(
@@ -371,6 +373,7 @@ async def changerevisioncard(data : JSONStructure = None, authorization: str = H
                     oldcard["translation"] = card["translation"]    
                     oldcard["revisioncardimgname"] = card["revisioncardimgname"]    
                     oldcard["revisioncardimage"] = card["revisioncardimage"]     
+                    #print(oldcard)
                     if card == oldcard:
                         user_revision_cards["revisioncards"].remove(card)
                         left_over_image.append({"revisioncardimgname":card["revisioncardimgname"],"revisioncardimage":card["revisioncardimage"] })
@@ -437,7 +440,12 @@ async def getrevisioncardsws(websocket: WebSocket):
                             #return StreamingResponse(iter_df(user_revision_cards), media_type="application/json")
                             #return user_revision_cards
                             for revisioncard in user_revision_cards["revisioncards"]:
-                                revisioncard.update({"revisionscheduleinterval":user_revision_cards["revisionscheduleinterval"],"sendtoemail":user_revision_cards["sendtoemail"]})
+                                revisionscheduleinterval = revisioncard.get("revisionscheduleinterval")
+                                if revisionscheduleinterval:
+                                    revisioncard.update({"revisionscheduleinterval":revisionscheduleinterval,"sendtoemail":user_revision_cards["sendtoemail"]})
+                                else:
+                                    revisioncard.update({"revisionscheduleinterval":user_revision_cards["revisionscheduleinterval"],"sendtoemail":user_revision_cards["sendtoemail"]})
+                                    
                                 await websocket.send_json(json.dumps(revisioncard)) # sends the buffer as bytes
                         elif not email_exists:
                             await websocket.send_json(json.dumps({"message":"No revision cards"}))
@@ -450,7 +458,6 @@ async def getrevisioncardsws(websocket: WebSocket):
         await websocket.send_json(json.dumps({"error":f"{type(cex)},{cex}"}))
     except WebSocketDisconnect as wex:
         pass
-
 
 
 
@@ -479,9 +486,10 @@ async def removerevisioncard(data : JSONStructure = None, authorization: str = H
             if email_exists:  # Checks if email exists
                 # Remove the revision card from the database.
                 user_revision_cards = list(importcsv.db.accountrevisioncards.find({"email": current_user}))[0]
-                del data["sendtoemail"],data["revisionscheduleinterval"]
+                print(data["revisionscheduleinterval"])
+                del data["sendtoemail"]
                 for card in user_revision_cards["revisioncards"]:
-                    #print(data)
+                    
                     if card == data:
                         user_revision_cards["revisioncards"].remove(card)
                 #importcsv.db.accountrevisioncards.delete_many({"email":current_user})
@@ -493,7 +501,10 @@ async def removerevisioncard(data : JSONStructure = None, authorization: str = H
                 try:
                     user_scheduled_cards = list(importcsv.db.scheduledcards.find({"email": current_user}))[0]
                     for card in user_scheduled_cards["revisioncards"]:
+                        scheduleId = card["scheduleId"] 
+                        del card["scheduleId"]
                         if card == data:
+                            resp = requests.delete(f"https://qstash.upstash.io/v2/schedules/{scheduleId}",headers={"Authorization": f"Bearer {qstash_access_token}"})
                             user_scheduled_cards["revisioncards"].remove(card)
                     #importcsv.db.scheduledcards.delete_many({"email":current_user})
                     #importcsv.db.scheduledcards.insert_one(user_scheduled_cards)
@@ -508,8 +519,26 @@ async def removerevisioncard(data : JSONStructure = None, authorization: str = H
             return {f"error":f"{type(ex)},{str(ex)}"}
 @app.post('/schedulerevisioncard') # POST # allow all origins all methods.
 async def schedulerevisioncard(data : JSONStructure = None, authorization: str = Header(None)):
+    def create_schedule(card):
+        interval = card['revisionscheduleinterval']
+        print(interval)
+        if interval == 60:
+            cronstr = f"0 * * * *"
+        elif interval < 60:
+            cronstr = f"*/{interval} * * * *"
+        elif interval > 60:
+            hours = interval // 60 
+            mins_left = interval % 60 
+            cronstr = f"*/{mins_left} */{hours} * * *"
+        json_card = {"email":card["sendtoemail"],"subject":f"{card['subject']} - {card['revisioncardtitle']}","message":f"{card['revisioncard']}"}
+
+        resp = requests.post("https://qstash.upstash.io/v2/schedules/https://caesaraicronemail-qqbn26mgpa-uc.a.run.app/sendemail",json=json_card,headers= {"Authorization": f"Bearer {qstash_access_token}","Upstash-Cron":f"{cronstr}"})
+        scheduleId = resp.json()["scheduleId"]
+        return scheduleId
+        
     try:
         current_user = secure_decode(authorization.replace("Bearer ",""))["email"]
+
         if current_user:
             data = dict(data)#request.get_json() # test
             email_exists = importcsv.db.scheduledcards.find_one({"email":current_user})
@@ -520,7 +549,10 @@ async def schedulerevisioncard(data : JSONStructure = None, authorization: str =
                 #print(user_revision_cards)
                 for card in data["revisioncards"]: # Checks if the revision card exists in the database.
                    if card not in user_scheduled_cards["revisioncards"]:
+                        scheduleId = create_schedule(card)
+                        card["scheduleId"] = scheduleId
                         cards_not_exist.append(card) # If not, add it to the list.
+
                         #cards_that_exist.append(card)
                 if cards_not_exist != []:
                     new_cards = cards_not_exist + user_scheduled_cards["revisioncards"] # adds new cards to the list.
@@ -529,15 +561,18 @@ async def schedulerevisioncard(data : JSONStructure = None, authorization: str =
                     user_scheduled_cards["email"] = current_user # Sets the email to the current user.
                     #importcsv.db.scheduledcards.delete_many({"email":current_user}) # Allows data to be updated.
                     #importcsv.db.scheduledcards.insert_one(user_scheduled_cards) # Inserts the new data.
+
                     importcsv.db.scheduledcards.replace_one(
                     {"email":current_user},user_scheduled_cards
-                )
+                    )
                     return {"message":"revision cards scheduled"}
                 elif cards_not_exist == []: # If the cards are already in the database, return a message.
                     return {"message":"revision cards already scheduled"}
 
             elif not email_exists:
                 data["email"] = current_user
+                scheduleId = create_schedule(data)
+                data["revisioncards"][0]["scheduleId"] = scheduleId
                 importcsv.db.scheduledcards.insert_one(data)
 
                 return {"message": "revision card scheduled"}
@@ -551,6 +586,9 @@ async def unscheduleallrevisioncard(authorization: str = Header(None)):
             email_exists = importcsv.db.scheduledcards.find_one({"email":current_user})
             if email_exists:  # Checks if email exists
                 user_revision_cards = list(importcsv.db.scheduledcards.find({"email": current_user}))[0]
+                for card in user_revision_cards["revisioncards"]:
+                    scheduleId = card["scheduleId"] 
+                    resp = requests.delete(f"https://qstash.upstash.io/v2/schedules/{scheduleId}",headers={"Authorization": f"Bearer {qstash_access_token}"})
                 user_revision_cards["revisioncards"] = []
                 #importcsv.db.scheduledcards.delete_many({"email":current_user})
                 #importcsv.db.scheduledcards.insert_one(user_revision_cards)
@@ -571,7 +609,10 @@ async def unschedulerevisioncard(data : JSONStructure = None, authorization: str
 
                 user_revision_cards = list(importcsv.db.scheduledcards.find({"email": current_user}))[0]
                 for card in user_revision_cards["revisioncards"]:
+                    scheduleId = card["scheduleId"] 
+                    del card["scheduleId"]
                     if card == data:
+                        resp = requests.delete(f"https://qstash.upstash.io/v2/schedules/{scheduleId}",headers={"Authorization": f"Bearer {qstash_access_token}"})
                         user_revision_cards["revisioncards"].remove(card)
                 #importcsv.db.scheduledcards.delete_many({"email":current_user})
                 #importcsv.db.scheduledcards.insert_one(user_revision_cards)
