@@ -524,7 +524,7 @@ async def removerevisioncard(data : JSONStructure = None, authorization: str = H
 async def schedulerevisioncard(data : JSONStructure = None, authorization: str = Header(None)):
     def create_schedule(card):
         interval = card['revisionscheduleinterval']
-        print(interval)
+   
         if interval == 60:
             cronstr = f"0 * * * *"
         elif interval < 60:
@@ -548,8 +548,6 @@ async def schedulerevisioncard(data : JSONStructure = None, authorization: str =
             if email_exists:  # Checks if email exists
                 cards_not_exist = []
                 user_scheduled_cards = list(importcsv.db.scheduledcards.find({"email": current_user}))[0] # Gets the email.
-                
-                #print(user_revision_cards)
                 for card in data["revisioncards"]: # Checks if the revision card exists in the database.
                    if card not in user_scheduled_cards["revisioncards"]:
                         scheduleId = create_schedule(card)
@@ -574,13 +572,15 @@ async def schedulerevisioncard(data : JSONStructure = None, authorization: str =
 
             elif not email_exists:
                 data["email"] = current_user
-                scheduleId = create_schedule(data)
+                print(data)
+                scheduleId = create_schedule(data["revisioncards"][0])
                 data["revisioncards"][0]["scheduleId"] = scheduleId
                 importcsv.db.scheduledcards.insert_one(data)
 
                 return {"message": "revision card scheduled"}
     except Exception as ex:
         print(type(ex),ex)
+        return {"error":f"{type(ex)},{ex}"}
 @app.delete('/unscheduleallrevisioncard') # DELETE # allow all origins all methods.
 async def unscheduleallrevisioncard(authorization: str = Header(None)):
     current_user = secure_decode(authorization.replace("Bearer ",""))["email"]
