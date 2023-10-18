@@ -522,7 +522,7 @@ async def removerevisioncard(data : JSONStructure = None, authorization: str = H
             return {f"error":f"{type(ex)},{str(ex)}"}
 @app.post('/schedulerevisioncard') # POST # allow all origins all methods.
 async def schedulerevisioncard(data : JSONStructure = None, authorization: str = Header(None)):
-    def create_schedule(card):
+    def create_schedule(card,current_user):
         interval = card['revisionscheduleinterval']
    
         if interval == 60:
@@ -533,7 +533,7 @@ async def schedulerevisioncard(data : JSONStructure = None, authorization: str =
             hours = interval // 60 
             mins_left = interval % 60 
             cronstr = f"*/{mins_left} */{hours} * * *"
-        json_card = {"email":card["sendtoemail"],"subject":f"{card['subject']} - {card['revisioncardtitle']}","message":f"{card['revisioncard']}"}
+        json_card = {"email":card["sendtoemail"],"subject":f"{card['subject']} - {card['revisioncardtitle']} | {current_user}","message":f"{card['revisioncard']}"}
 
         resp = requests.post("https://qstash.upstash.io/v2/schedules/https://caesaraicronemail-qqbn26mgpa-uc.a.run.app/sendemail",json=json_card,headers= {"Authorization": f"Bearer {qstash_access_token}","Upstash-Cron":f"{cronstr}"})
         scheduleId = resp.json()["scheduleId"]
@@ -550,7 +550,7 @@ async def schedulerevisioncard(data : JSONStructure = None, authorization: str =
                 user_scheduled_cards = list(importcsv.db.scheduledcards.find({"email": current_user}))[0] # Gets the email.
                 for card in data["revisioncards"]: # Checks if the revision card exists in the database.
                    if card not in user_scheduled_cards["revisioncards"]:
-                        scheduleId = create_schedule(card)
+                        scheduleId = create_schedule(card,current_user)
                         card["scheduleId"] = scheduleId
                         cards_not_exist.append(card) # If not, add it to the list.
 
@@ -572,7 +572,7 @@ async def schedulerevisioncard(data : JSONStructure = None, authorization: str =
 
             elif not email_exists:
                 data["email"] = current_user 
-                scheduleId = create_schedule(data["revisioncards"][0])
+                scheduleId = create_schedule(data["revisioncards"][0],current_user)
                 data["revisioncards"][0]["scheduleId"] = scheduleId
                 importcsv.db.scheduledcards.insert_one(data)
 
@@ -635,9 +635,9 @@ async def sendnowrevisioncard(data : JSONStructure = None, authorization: str = 
         if current_user:
             data = dict(data)#request.get_json()
             now = datetime.now().strftime("%c")
-            message = f"""{data['revisioncards'][0]['revisioncardtitle']}{data["revisioncards"][0]["revisioncard"]}"""
+            message = f"""{data['revisioncards'][0]['revisioncardtitle']}<br>{data["revisioncards"][0]["revisioncard"]}"""
             #response = requests.post("http://0.0.0.0:7860/raspsendemail",json={"raspsendemail":{"email":data["sendtoemail"],"message":message,"subject":f"{data['revisioncards'][0]['subject']} Send Now"}})
-            RaspEmail.send(**{"email":data["sendtoemail"],"message":message,"subject":f"{data['revisioncards'][0]['subject']} Send Now"})
+            RaspEmail.send(**{"email":data["sendtoemail"],"message":message,"subject":f"{data['revisioncards'][0]['subject']} - {current_user} Send Now"})
             #print(response.text)
             #msg = Message(f"{data['revisioncards'][0]['subject']} Send Now", recipients=[data["sendtoemail"]]) # "amari.lawal@gmail.com"
             #msg.body = f"Mail from RevisionCard Send Now at {now}"
