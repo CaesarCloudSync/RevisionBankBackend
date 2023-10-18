@@ -571,8 +571,7 @@ async def schedulerevisioncard(data : JSONStructure = None, authorization: str =
                     return {"message":"revision cards already scheduled"}
 
             elif not email_exists:
-                data["email"] = current_user
-                print(data)
+                data["email"] = current_user 
                 scheduleId = create_schedule(data["revisioncards"][0])
                 data["revisioncards"][0]["scheduleId"] = scheduleId
                 importcsv.db.scheduledcards.insert_one(data)
