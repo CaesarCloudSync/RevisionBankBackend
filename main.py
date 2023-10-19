@@ -29,7 +29,7 @@ import jwt
 #import cv2
 from fastapi.responses import StreamingResponse
 from fastapi import WebSocket,WebSocketDisconnect
-
+from RevisionBankCron.revisionbankcron import RevisionBankCron
 import re
 import jwt
 from fastapi import FastAPI, Header
@@ -523,19 +523,25 @@ async def removerevisioncard(data : JSONStructure = None, authorization: str = H
 @app.post('/schedulerevisioncard') # POST # allow all origins all methods.
 async def schedulerevisioncard(data : JSONStructure = None, authorization: str = Header(None)):
     def create_schedule(card,current_user):
-        interval = card['revisionscheduleinterval']
-   
-        if interval == 60:
-            cronstr = f"0 * * * *"
-        elif interval < 60:
-            cronstr = f"*/{interval} * * * *"
-        elif interval > 60:
-            hours = interval // 60 
-            mins_left = interval % 60 
-            cronstr = f"*/{mins_left} */{hours} * * *"
-        json_card = {"email":card["sendtoemail"],"subject":f"{card['subject']} - {card['revisioncardtitle']} | {current_user}","message":f"{card['revisioncard']}"}
+        interval = str(card['revisionscheduleinterval'])
 
+        if "MI" in interval:
+            cronstr = RevisionBankCron.minute_cron_time(interval)
+        elif "H" in interval:
+            cronstr = RevisionBankCron.hour_cron_time(interval)
+        elif "D" in interval:
+            cronstr = RevisionBankCron.day_cron_time(interval)
+        elif "MO" in interval:
+            cronstr = RevisionBankCron.month_cron_time(interval)
+        elif len(interval) <= 2:
+            cronstr = f"*/{interval} * * * *"
+        
+
+        
+        
+        json_card = {"email":card["sendtoemail"],"subject":f"{card['subject']} - {card['revisioncardtitle']} | {current_user}","message":f"{card['revisioncard']}"}
         resp = requests.post("https://qstash.upstash.io/v2/schedules/https://caesaraicronemail-qqbn26mgpa-uc.a.run.app/sendemail",json=json_card,headers= {"Authorization": f"Bearer {qstash_access_token}","Upstash-Cron":f"{cronstr}"})
+        #print(resp)
         scheduleId = resp.json()["scheduleId"]
         return scheduleId
         
