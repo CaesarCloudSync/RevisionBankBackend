@@ -357,7 +357,12 @@ async def changerevisioncard(data : JSONStructure = None, authorization: str = H
                             oldcard = {i:data[i] for i in data if i!='newrevisioncard'}
 
                             if card == oldcard:
-                                user_scheduled_cards["revisioncards"].remove(card)
+                                scheduleId = card.get("scheduleId")
+                                if scheduleId:
+                                    del card["scheduleId"]
+                                if scheduleId:
+                                    resp = requests.delete(f"https://qstash.upstash.io/v2/schedules/{scheduleId}",headers={"Authorization": f"Bearer {qstash_access_token}"})
+                                    user_scheduled_cards["revisioncards"].remove(card)
                         #importcsv.db.scheduledcards.delete_many({"email":current_user})
                         #importcsv.db.scheduledcards.insert_one(user_scheduled_cards)
                         importcsv.db.scheduledcards.replace_one(
@@ -394,6 +399,61 @@ async def changerevisioncard(data : JSONStructure = None, authorization: str = H
                 #importcsv.db.accountrevisioncards.delete_many({"email":current_user})
                 #importcsv.db.accountrevisioncards.insert_one(user_revision_cards)
                 return {"message":"revision card changed."}
+        except Exception as ex:
+            #print({f"error":f"{type(ex)},{str(ex)}"})
+            return {f"error":f"{type(ex)},{str(ex)}"}
+@app.post('/changerevisioncardmetadata') # POST # allow all origins all methods.
+async def changerevisioncardmetadata(data : JSONStructure = None, authorization: str = Header(None)):
+    current_user = secure_decode(authorization.replace("Bearer ",""))["email"]
+    if current_user:
+        try:
+            data = dict(data)#request.get_json()
+            oldcard_data = {"oldsubject":data["oldsubject"],"oldrevisioncardtitle":data["oldrevisioncardtitle"],"oldrevisionscheduleinterval":data["oldrevisionscheduleinterval"]}
+            newcard_data = {"subject":data["newsubject"],"revisioncardtitle":data["newrevisioncardtitle"],"revisionscheduleinterval": data["newrevisionscheduleinterval"]}
+            email_exists = importcsv.db.accountrevisioncards.find_one({"email":current_user})
+            if email_exists:  # Checks if email exists
+                # TODO Slightly buggy here - removes old schedule from the database.
+                scheduled_exists = importcsv.db.scheduledcards.find_one({"email":current_user})
+                if scheduled_exists:
+                    user_scheduled_cards = list(importcsv.db.scheduledcards.find({"email": current_user}))[0]
+                    if user_scheduled_cards:
+                        for card in user_scheduled_cards["revisioncards"]:
+                            
+
+                            if card['revisioncardtitle'] == oldcard_data['oldrevisioncardtitle'] and card["subject"] == oldcard_data["oldsubject"]:
+                                scheduleId = card.get("scheduleId")
+                                if scheduleId:
+                                    del card["scheduleId"]
+                                if scheduleId:
+                                    resp = requests.delete(f"https://qstash.upstash.io/v2/schedules/{scheduleId}",headers={"Authorization": f"Bearer {qstash_access_token}"})
+                                    user_scheduled_cards["revisioncards"].remove(card)
+
+                        importcsv.db.scheduledcards.replace_one(
+                                    {"email":current_user},user_scheduled_cards
+                                    )
+                    
+
+                user_revision_cards = list(importcsv.db.accountrevisioncards.find({"email": current_user}))[0]
+                edited_card = {}
+                for card in user_revision_cards["revisioncards"]:   
+                    #print(oldcard)
+                    if card['revisioncardtitle'] == oldcard_data['oldrevisioncardtitle'] and card["subject"] == oldcard_data["oldsubject"]:
+                        edited_card.update(card)
+                        user_revision_cards["revisioncards"].remove(card)
+
+                #print(user_revision_cards)
+
+
+                edited_card["subject"] = newcard_data["subject"]
+                edited_card["revisioncardtitle"] = newcard_data["revisioncardtitle"]
+                edited_card["revisionscheduleinterval"] = newcard_data["revisionscheduleinterval"]
+                user_revision_cards["revisioncards"].insert(0,edited_card) # .append()
+                #print(user_revision_cards)
+                importcsv.db.accountrevisioncards.replace_one(
+                                {"email":current_user},user_revision_cards
+                                )
+
+                return {"message":"revision card meta data changed."}
         except Exception as ex:
             #print({f"error":f"{type(ex)},{str(ex)}"})
             return {f"error":f"{type(ex)},{str(ex)}"}
