@@ -491,6 +491,36 @@ async def changecardimage(data : JSONStructure = None, authorization: str = Head
         except Exception as ex:
             #print({f"error":f"{type(ex)},{str(ex)}"})
             return {f"error":f"{type(ex)},{str(ex)}"}
+@app.post('/addcardimage') # POST # allow all origins all methods.
+async def addcardimage(data : JSONStructure = None, authorization: str = Header(None)):
+    current_user = secure_decode(authorization.replace("Bearer ",""))["email"]
+    if current_user:
+        try:
+            data = dict(data)#request.get_json()
+            oldcard_data = {"subject":data["subject"],"revisioncardtitle":data["revisioncardtitle"],"newimagename":data["newimagename"],"newimage":data["newimage"]}
+            email_exists = importcsv.db.accountrevisioncards.find_one({"email":current_user})
+            if email_exists:  # Checks if email exists
+                # TODO Slightly buggy here - removes old schedule from the database.
+
+                unscres = revisionbankutils.unschedule_change_cards(oldcard_data,current_user)
+
+                user_revision_cards = list(importcsv.db.accountrevisioncards.find({"email": current_user}))[0]
+                user_revision_cards,revisioncard = revisionbankutils.get_card_to_update(user_revision_cards,oldcard_data,current_user)
+                revisioncard["revisioncardimgname"].append(oldcard_data["newimagename"])
+                revisioncard["revisioncardimage"].append(oldcard_data["newimage"])
+                
+                user_revision_cards["revisioncards"].insert(0,revisioncard) # .append()
+
+                importcsv.db.accountrevisioncards.replace_one(
+                                {"email":current_user},user_revision_cards
+                                )
+                #print(user_revision_cards)
+
+                return {"message":"revisioncard image was added."}
+                #return {"message":"revision card meta data changed."}
+        except Exception as ex:
+            #print({f"error":f"{type(ex)},{str(ex)}"})
+            return {f"error":f"{type(ex)},{str(ex)}"}
 
 
             
