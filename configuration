@@ -1,0 +1,5 @@
+MAIL_DEFAULT_SENDER=revisionbankedu@gmail.com
+MAIL_PORT=587
+MAIL_SERVER=smtp.sendgrid.net
+MAIL_USE_TLS=True
+MAIL_USERNAME=apikey
