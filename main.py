@@ -131,7 +131,7 @@ async def storerevisioncards(data : JSONStructure = None, authorization: str = H
                             if ind == 0:
                                 res = caesarcrud.update_data(("revisioncardimgname",),
                                     ("true",),caesarcreatetables.accountrevisioncards_table,f"revisioncardhash = '{revisioncardhash}'")    
-                            resblob = revsqlops.store_revisoncard_image(revisioncardimgname,revisioncardimage,revisioncardhash)
+                            resblob = revsqlops.store_revisoncard_image(current_user,revisioncardimgname,revisioncardimage,revisioncardhash)
                             if resblob:
                                 pass
                             else:
@@ -552,7 +552,7 @@ async def manageaddcardimage(data : JSONStructure = None, authorization: str = H
             condition_image = f"revisioncardhash = '{revisioncardhash}' AND revisioncardimgname = '{data['newimagename']}'"
             image_exists = caesarcrud.check_exists(("*"),table=caesarcreatetables.revisioncardimage_table,condition=condition_image)
             if not image_exists:
-                res = revsqlops.store_revisoncard_image(oldcard_data["newimagename"],oldcard_data["newimage"],revisioncardhash)
+                res = revsqlops.store_revisoncard_image(current_user,oldcard_data["newimagename"],oldcard_data["newimage"],revisioncardhash)
                 if res:
                     return {"message":"revisioncard image was added."}
 
@@ -590,27 +590,44 @@ async def manageremovecardimage(data : JSONStructure = None, authorization: str 
             return {f"error":f"{type(ex)},{str(ex)}"}
 @app.get('/getsubscription') # GET
 async def getsubscription(authorization: str = Header(None)):
+    try:
+        current_user = revisionbankjwt.secure_decode(authorization.replace("Bearer ",""))["email"] # outputs the email of the user example@gmail.com
+        if current_user:
+            
+                subscription_exists = caesarcrud.check_exists(("*"),table="users",condition=f"email = '{current_user}'")
+                #if subscription_exists:
+                #end_date = user_from_db["end_date_subscription"]
+                #end_date_subscription = {"end_date_subscription": end_date}
+                return {"error":"no subscription system yet."}
+    except Exception as ex:
+        return {"error": f"{type(ex)}-{ex}"}
+@app.delete('/deleteaccount') # DELETE
+async def deleteaccount(authorization: str = Header(None)):
     current_user = revisionbankjwt.secure_decode(authorization.replace("Bearer ",""))["email"] # outputs the email of the user example@gmail.com
     if current_user:
         try:
-            subscription_exists = caesarcrud.check_exists(("*"),table="users",condition=f"email = '{current_user}'")
-            #if subscription_exists:
-            #end_date = user_from_db["end_date_subscription"]
-            #end_date_subscription = {"end_date_subscription": end_date}
-            return {"error":"no subscription system yet."}
+            res = caesarcrud.delete_data("users",condition=f"email = '{current_user}'")
+            res = caesarcrud.delete_data("accountrevisioncards",condition=f"email = '{current_user}'")
+            res = caesarcrud.delete_data("revisioncardimages",condition=f"email = '{current_user}'")
+            res = caesarcrud.delete_data("scheduledcards",condition=f"email = '{current_user}'")
+            if res:
+                return {"message":"Account Deleted"}
+            else:
+                return {"error":"error when deleting."}
         except Exception as ex:
             return {"error": f"{type(ex)}-{ex}"}
 @app.get('/checkstudentsubscriptions') # GET
 async def checkstudentsubscriptions(authorization: str = Header(None)): 
-    current_user = revisionbankjwt.secure_decode(authorization.replace("Bearer ",""))["email"] # outputs the email of the user example@gmail.com
-    if current_user:
-        try:
-            #student_from_db = list(importcsv.db.studentsubscriptions.find({"email": current_user}))[0] # Gets wanted data for user
-            #student_subscription  = student_from_db["subscription"]
-            #student_subscription_json = {"student_subscription": student_subscription}
-            return {"error":"studentsubscription doesn't exist yet."}#student_subscription_json
-        except Exception as ex:
-            return {"error": f"{type(ex)}-{ex}"}
+    try:
+        current_user = revisionbankjwt.secure_decode(authorization.replace("Bearer ",""))["email"] # outputs the email of the user example@gmail.com
+        if current_user:
+            
+                #student_from_db = list(importcsv.db.studentsubscriptions.find({"email": current_user}))[0] # Gets wanted data for user
+                #student_subscription  = student_from_db["subscription"]
+                #student_subscription_json = {"student_subscription": student_subscription}
+                return {"error":"studentsubscription doesn't exist yet."}#student_subscription_json
+    except Exception as ex:
+        return {"error": f"{type(ex)}-{ex}"}
 @app.get('/getemailcount') # GET
 async def getemailcount(authorization: str = Header(None)):
     current_user = revisionbankjwt.secure_decode(authorization.replace("Bearer ",""))["email"] # outputs the email of the user example@gmail.com
@@ -622,15 +639,28 @@ async def getemailcount(authorization: str = Header(None)):
             return {"error":"no subscription system yet."}
         except Exception as ex:
             return {"error": f"{type(ex)}-{ex}"}
-@app.get('/getemail') # GET
-async def getemail(authorization: str = Header(None)):
+@app.get('/getfreetrial') # GET
+async def getfreetrial(authorization: str = Header(None)):
     current_user = revisionbankjwt.secure_decode(authorization.replace("Bearer ",""))["email"] # outputs the email of the user example@gmail.com
     if current_user:
         try: 
-            email = caesarcrud.get_data(("email",),"users",condition=f"email = '{current_user}'")[0]
-            return {"email":email["email"]}
+            #freetrialhistory = list(importcsv.db.freetrialhistory.find({"email": current_user}))[0] # Gets wanted data for user
+            #freetrial = freetrialhistory["freetrial"]
+            #freetrial_subscription = {"freetrial": freetrial} # check freetrial
+            return {"error":"no subscription system yet."}
         except Exception as ex:
             return {"error": f"{type(ex)}-{ex}"}
+@app.get('/getemail') # GET
+async def getemail(authorization: str = Header(None)):
+    try: 
+        current_user = revisionbankjwt.secure_decode(authorization.replace("Bearer ",""))["email"] # outputs the email of the user example@gmail.com
+        print(current_user)
+        if current_user:
+            
+                email = caesarcrud.get_data(("email",),"users",condition=f"email = '{current_user}'")[0]
+                return {"email":email["email"]}
+    except Exception as ex:
+        return {"error": f"{type(ex)}-{ex}"}
 
 async def main():
     config = uvicorn.Config("main:app", port=8080, log_level="info",reload=True) # ,host="0.0.0.0"

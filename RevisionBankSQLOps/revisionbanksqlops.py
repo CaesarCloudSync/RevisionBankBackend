@@ -14,14 +14,14 @@ class RevisionBankSQLOps:
         res = self.caesarcrud.post_data(("email","sendtoemail","subject","revisioncardtitle","revisionscheduleinterval","revisioncard","revisioncardhash"),
                                 revisioncardvalues,table)
         return res
-    def store_revisoncard_image(self,revisioncardimgname,revisioncardimage,revisioncardhash):
+    def store_revisoncard_image(self,current_user,revisioncardimgname,revisioncardimage,revisioncardhash):
         filetype,revisioncardimage = revisioncardimage.split(",", 1)[0] + ",",revisioncardimage.split(",", 1)[1]
                            
 
         tableblob = "revisioncardimages"
 
-        resblob = self.caesarcrud.post_data(("revisioncardimgname","filetype","revisioncardhash"),
-                    (revisioncardimgname,filetype,revisioncardhash),tableblob)
+        resblob = self.caesarcrud.post_data(("revisioncardimgname","email","filetype","revisioncardhash"),
+                    (revisioncardimgname,current_user,filetype,revisioncardhash),tableblob)
         resblob = self.caesarcrud.update_blob("revisioncardimage",revisioncardimage,tableblob,f"revisioncardhash = '{revisioncardhash}' AND revisioncardimgname = '{revisioncardimgname}'")
         return resblob    
     def update_revisoncard_image(self,revisioncardimgname,revisioncardimage,revisioncardhash,oldrevisioncardimgname):
