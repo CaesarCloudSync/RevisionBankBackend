@@ -1,8 +1,20 @@
 import requests
 import unittest
 import base64
+from dotenv import load_dotenv
+load_dotenv(".env")
+from csv_to_db import ImportCSV
+from CaesarSQLDB.caesarcrud import CaesarCRUD
+from CaesarSQLDB.caesarhash import CaesarHash
+from RevisionBankSQLOps.revisionbanksqlops import RevisionBankSQLOps
+from CaesarSQLDB.caesar_create_tables import CaesarCreateTables
+caesarcrud = CaesarCRUD()
+caesarcreatetables = CaesarCreateTables()
+revsqlops = RevisionBankSQLOps(caesarcrud,caesarcreatetables)
+
 uri = "http://127.0.0.1:8080"
 #uri = "http://192.168.0.10:5000"
+importcsv = ImportCSV("RevisionBankDB",maindb=0)
 class RevisionBankRevisionCards(unittest.TestCase):
     def test_signup(self):
         response = requests.post(f"{uri}/signupapi",json={"email":"amari.sql@gmail.com","password":"kya63amari"})
@@ -109,7 +121,75 @@ class RevisionBankSchedule(unittest.TestCase):
         header = {"Authorization": f"Bearer {access_token}"}
         response = requests.get(f"{uri}/checkschedulerevisioncard",headers=header)
         print(response.json())
-        
+class RevisionBankMongoToSQLMigrate(unittest.TestCase):
+    def test_migrate_users_details(self):
+        numsuccesses = []
+        count = 0
+        user_data = importcsv.db.users.find({ "email": { "$exists": "true" } } )
+        for user in user_data:
+            res = caesarcrud.post_data(("email","password"),(user["email"],user["password"]),"users")
+            if res:
+                print(f"Success: {count}")
+                numsuccesses.append(res)
+                count += 1
+            else:
+                print(f"Failure {count}")
+                numsuccesses.append(res)
+                count += 1
+        allsucessresult = list(set(numsuccesses))[0]
+        self.assertEqual(True,allsucessresult)
+    def test_migrate_account_revisioncards(self):
+
+        #import json
+        #with open("data.json","r") as f:
+        #    account_revisioncards_data = [json.load(f)]
+
+        numsuccesses = []
+        count = 0
+        account_revisioncards_data = importcsv.db.accountrevisioncards.find({ "email": { "$exists": "true" } } )
+
+            
+        for account_card in account_revisioncards_data:
+            
+            email = account_card["email"]
+            sendtoemail = account_card["sendtoemail"]
+            revisioncards = account_card["revisioncards"]
+            for revisioncard in revisioncards:
+                print("Loading Revision Card...")
+                subject = revisioncard["subject"]
+                revisioncardtitle = revisioncard["revisioncardtitle"]
+                revisioncardtext = revisioncard["revisioncard"]
+                revisioncardhash = CaesarHash.hash_text(email + subject + revisioncardtitle)
+                revisionscheduleinterval = revisioncard.get("revisionscheduleinterval")
+                if not revisionscheduleinterval:
+                    revisionscheduleinterval = "30MI"
+                revisioncardimgname = revisioncard.get("revisioncardimgname")
+                revisioncardimage = revisioncard.get("revisioncardimage")
+                print("Storing in database.")
+                if revisioncardimgname:
+                    res = caesarcrud.post_data(("email","sendtoemail","subject","revisioncardtitle","revisionscheduleinterval","revisioncard","revisioncardimgname","revisioncardhash"),
+                        (email,sendtoemail,subject,revisioncardtitle,revisionscheduleinterval,revisioncardtext,"true",revisioncardhash),"accountrevisioncards")
+                    for ind,imagename in enumerate(revisioncardimgname):
+                        res = revsqlops.store_revisoncard_image(email,imagename,revisioncardimage[ind],revisioncardhash)
+
+                else:
+                    res = caesarcrud.post_data(("email","sendtoemail","subject","revisioncardtitle","revisionscheduleinterval","revisioncard","revisioncardhash"),
+                                                (email,sendtoemail,subject,revisioncardtitle,revisionscheduleinterval,revisioncardtext,revisioncardhash),"accountrevisioncards")
+                print("Stored.")
+                
+                if res:
+                    print(f"Success: {count}")
+                    numsuccesses.append(res)
+                    count += 1
+                else:
+                    print(f"Failure {count}")
+                    numsuccesses.append(res)
+                    count += 1
+        allsucessresult = list(set(numsuccesses))[0]
+        self.assertEqual(True,allsucessresult)
+
+
+     
         #self.assertNotEqual(None,response.json().get("message"))
 
 #class RevisionBankAuth(unittest.TestCase):

@@ -18,7 +18,7 @@ class CaesarCreateTables:
         ("varchar(255) NOT NULL","varchar(255) NOT NULL","varchar(255) NOT NULL","INT"),
         "studentsubscriptions")
         caesarcrud.create_table("revisioncardid",self.revisioncardfields,
-        ("varchar(255) NOT NULL","varchar(255) NOT NULL","varchar(255) NOT NULL","varchar(255) NOT NULL","varchar(255) NOT NULL","varchar(255) NOT NULL","varchar(255)","TEXT NOT NULL"),
+        ("varchar(255) NOT NULL","varchar(255) NOT NULL","varchar(255) NOT NULL","varchar(255) NOT NULL","varchar(255) NOT NULL","TEXT NOT NULL","varchar(255)","TEXT NOT NULL"),
         "accountrevisioncards")
         caesarcrud.create_table("revisioncardimageid",self.revisioncardimagefields,
         ("varchar(255) NOT NULL","varchar(255) NOT NULL","varchar(255) NOT NULL","varchar(255) NOT NULL","MEDIUMBLOB"),

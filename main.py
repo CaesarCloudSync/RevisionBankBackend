@@ -49,7 +49,24 @@ JSONArray = List[Any]
 JSONStructure = Union[JSONArray, JSONObject]
 time_hour = (60 * 60) * 3 # 1 hour, * 3 hours
 
+class ConnectionManager:
+    def __init__(self):
+        self.active_connections: list[WebSocket] = []
 
+    async def connect(self, websocket: WebSocket):
+        await websocket.accept()
+        self.active_connections.append(websocket)
+
+    def disconnect(self, websocket: WebSocket):
+        self.active_connections.remove(websocket)
+
+    async def send_personal_message(self, message: str, websocket: WebSocket):
+        await manager.broadcast(message)
+
+    async def broadcast(self, message: str):
+        for connection in self.active_connections:
+            await connection.send_json(message)
+manager = ConnectionManager()
 
 @app.get('/')# GET # allow all origins all methods.
 async def index():
@@ -259,9 +276,9 @@ def is_hexadecimal(input_bytes):
 
 # Example usage:
 
-@app.websocket("/getrevisioncardsws")
-async def getrevisioncardsws(websocket: WebSocket):
-    await websocket.accept()
+@app.websocket("/getrevisioncardsws/{client_id}")
+async def getrevisioncardsws(websocket: WebSocket,client_id:str):
+    await manager.connect(websocket)
     try:
         while True:
             
@@ -273,8 +290,10 @@ async def getrevisioncardsws(websocket: WebSocket):
                     try:
                         condition = f"email = '{current_user}'"
                         email_exists = caesarcrud.check_exists(("*"),table=caesarcreatetables.accountrevisioncards_table,condition=condition)
+                        revisioncardfields = ("sendtoemail","subject","revisioncardtitle","revisionscheduleinterval","revisioncard","revisioncardimgname")
                         if email_exists:
-                            for revisioncard in reversed(caesarcrud.get_data(("sendtoemail","subject","revisioncardtitle","revisionscheduleinterval","revisioncard","revisioncardimgname"),caesarcreatetables.accountrevisioncards_table,condition=condition)):
+                            for revisioncard in caesarcrud.get_large_data(revisioncardfields,caesarcreatetables.accountrevisioncards_table,condition=condition):
+                                revisioncard = caesarcrud.tuple_to_json(revisioncardfields,revisioncard)
                                 sendtoemail = revisioncard["sendtoemail"]
                                 subject  = revisioncard["subject"]
                                 revisioncardtitle = revisioncard["revisioncardtitle"]
@@ -286,6 +305,7 @@ async def getrevisioncardsws(websocket: WebSocket):
                                 #print(condition)
 
                                 if revisioncardimgname:
+                                
                                     imagedata = caesarcrud.get_data(("revisioncardimgname","filetype","revisioncardhash","revisioncardimage"),caesarcreatetables.revisioncardimage_table,condition=condition)
                                     revisioncardimgname = [image["revisioncardimgname"] for image in imagedata]
                                     revisioncardimage = []
@@ -296,32 +316,33 @@ async def getrevisioncardsws(websocket: WebSocket):
 
                                         final_imageb64 = f"{image['filetype']}{imageb64_string}"
                                         revisioncardimage.append(final_imageb64 )
-                                    await websocket.send_json(json.dumps({"revisioncardtitle":revisioncardtitle,"subject":subject,
+                                    await manager.broadcast(json.dumps({"revisioncardtitle":revisioncardtitle,"subject":subject,
                                         "revisionscheduleinterval":revisionscheduleinterval,"revisioncard":revisioncardtext,"revisioncardimgname":revisioncardimgname,"revisioncardimage":revisioncardimage,"sendtoemail":sendtoemail}))
-
                                 
                                 else:
                                     revisioncardimgname = []
                                     revisioncardimage = []
-                                    await websocket.send_json(json.dumps({"revisioncardtitle":revisioncardtitle,"subject":subject,
+                                    await manager.broadcast(json.dumps({"revisioncardtitle":revisioncardtitle,"subject":subject,
                                                                           "revisionscheduleinterval":revisionscheduleinterval,"revisioncard":revisioncardtext,
                                                                           "revisioncardimgname":revisioncardimgname,"revisioncardimage":revisioncardimage,
                                                                           "sendtoemail":sendtoemail}))
+                            
+                            await manager.broadcast(json.dumps({"message":"all sent."}))
+                            
 
-
-
-                            #    await websocket.send_json(json.dumps(revisioncard)) # sends the buffer as bytes
+                            #    await manager.broadcast(json.dumps(revisioncard)) # sends the buffer as bytes
                         elif not email_exists:
-                            await websocket.send_json(json.dumps({"message":"No revision cards"}))
+                            await manager.broadcast(json.dumps({"message":"No revision cards"}))
                             #return {"message":"No revision cards"} # Send in shape of data
                     except Exception as ex:
                         pass
-                        #await websocket.send_json(json.dumps({f"error":f"{type(ex)},{str(ex)}"})) 
+                        #await manager.broadcast(json.dumps({f"error":f"{type(ex)},{str(ex)}"})) 
                 elif not current_user:
-                    await websocket.send_json(json.dumps({"message":"No user."}))
+                    await manager.broadcast(json.dumps({"message":"No user."}))
     except WebSocketDisconnect:
         #await websocket.close()
-        print("Client disconnected")
+        manager.disconnect(websocket)
+        await manager.broadcast(f"Client #{client_id} left the chat")
 @app.post('/schedulerevisioncard') # POST # allow all origins all methods.
 async def schedulerevisioncard(data : JSONStructure = None, authorization: str = Header(None)):     
     try:

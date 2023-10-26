@@ -97,7 +97,7 @@ class CaesarSQL:
                 except IOError as ex:
                     print ("Command skipped: ", type(ex),ex )
 
-    def run_command(self,sqlcommand : str = None,result_function : Callable =None,datatuple : tuple =None,filename :str = None,verbose:int=1):
+    def run_command(self,sqlcommand : str = None,result_function : Callable =None,datatuple : tuple =None,filename :str = None,verbose:int=0):
         # Executes SQL Command or takes SQL file as input.
         #if verbose == 1:
             #if self.connection.is_connected():
@@ -125,6 +125,8 @@ class CaesarSQL:
                 #self.connection.commit()
             if verbose == 1:
                 print("SQL command executed.")
+                return new_result
+            else:
                 return new_result
 
 

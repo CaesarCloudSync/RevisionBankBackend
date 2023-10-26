@@ -9,9 +9,9 @@ class ImportCSV:
         ca = certifi.where()
         # This tells python to specifically send a tls certificate for the connection.
         if maindb == 0: # User Accounts Database
+            # mongodb+srv://palondomus:kya63amari@revisionbank0.elhfgsw.mongodb.net/?retryWrites=true&w=majority
             # 
-            # f"mongodb+srv://palondrome:kya63amari@roadmaptestcluster0.avksy.mongodb.net/roadmaptestdb?retryWrites=true&w=majority"
-            client = pymongo.MongoClient(f"mongodb+srv://palondomus:kya63amari@revisionbank0.elhfgsw.mongodb.net/?retryWrites=true&w=majority",tlsCAFile=ca)
+            client = pymongo.MongoClient(f"mongodb+srv://palondrome:kya63amari@roadmaptestcluster0.avksy.mongodb.net/roadmaptestdb?retryWrites=true&w=majority",tlsCAFile=ca)
             self.db = client[database]
         elif maindb == 1:# Question Paper 1 Database
             client = pymongo.MongoClient(f"mongodb+srv://palondrome2:kya63amari@cluster0.rxqjf.mongodb.net/chemistryqp?retryWrites=true&w=majority",tlsCAFile=ca)
