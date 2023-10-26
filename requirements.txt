@@ -49,6 +49,7 @@ nest-asyncio==1.5.4
 numpy==1.21.4
 packaging==21.3
 parso==0.8.3
+mysqlclient==2.2.0
 pathy==0.6.1
 pickleshare==0.7.5
 preshed==3.0.6
