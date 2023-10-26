@@ -342,7 +342,7 @@ async def getrevisioncardsws(websocket: WebSocket,client_id:str):
     except WebSocketDisconnect:
         #await websocket.close()
         manager.disconnect(websocket)
-        await manager.broadcast(f"Client #{client_id} left the chat")
+        ##await manager.broadcast(f"Client #{client_id} left the chat")
 @app.post('/schedulerevisioncard') # POST # allow all origins all methods.
 async def schedulerevisioncard(data : JSONStructure = None, authorization: str = Header(None)):     
     try:
