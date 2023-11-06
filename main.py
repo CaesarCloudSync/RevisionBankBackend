@@ -316,6 +316,7 @@ async def getrevisioncardsws(websocket: WebSocket,client_id:str):
 
                                         final_imageb64 = f"{image['filetype']}{imageb64_string}"
                                         revisioncardimage.append(final_imageb64 )
+                                    #print(revisioncardimage)
                                     await manager.broadcast(json.dumps({"revisioncardtitle":revisioncardtitle,"subject":subject,
                                         "revisionscheduleinterval":revisionscheduleinterval,"revisioncard":revisioncardtext,"revisioncardimgname":revisioncardimgname,"revisioncardimage":revisioncardimage,"sendtoemail":sendtoemail}))
                                 
@@ -545,8 +546,7 @@ async def managechangecardimage(data : JSONStructure = None, authorization: str 
             if schedule_exists:
                 revsqlops.unschedule_card_qstash(condition)
                 res = caesarcrud.delete_data("scheduledcards",condition=condition)
-            print(type(newimage))
-            res = revsqlops.update_revisoncard_image(newrevisioncardimgname,newimage,revisioncardhash,oldrevisioncardimgname)
+            res = revsqlops.update_revisoncard_image(current_user,newrevisioncardimgname,newimage,revisioncardhash,oldrevisioncardimgname)
             if res:
                 return {"message":"revisioncard image was replaced."}
             else:
@@ -570,7 +570,7 @@ async def manageaddcardimage(data : JSONStructure = None, authorization: str = H
             schedule_exists = caesarcrud.check_exists(("*"),table=caesarcreatetables.schedule_table,condition=condition)
             if schedule_exists:
                 revsqlops.unschedule_card_qstash(condition)
-            condition_image = f"revisioncardhash = '{revisioncardhash}' AND revisioncardimgname = '{data['newimagename']}'"
+            condition_image = f"revisioncardhash = '{revisioncardhash}' AND revisioncardimgname = '{data['newimagename']}' AND email = '{current_user}'"
             image_exists = caesarcrud.check_exists(("*"),table=caesarcreatetables.revisioncardimage_table,condition=condition_image)
             if not image_exists:
                 res = revsqlops.store_revisoncard_image(current_user,oldcard_data["newimagename"],oldcard_data["newimage"],revisioncardhash)
@@ -598,9 +598,15 @@ async def manageremovecardimage(data : JSONStructure = None, authorization: str 
             revisioncardhash = CaesarHash.hash_text(current_user + subject  + revisioncardtitle)
             condition = f"revisioncardhash = '{revisioncardhash}'"
             schedule_exists = caesarcrud.check_exists(("*"),table=caesarcreatetables.schedule_table,condition=condition)
-            if schedule_exists:
-                revsqlops.unschedule_card_qstash(condition)
-            res =caesarcrud.delete_data("revisioncardimages",f"revisioncardhash = '{revisioncardhash}' AND revisioncardimgname = '{oldimagename}'")
+            #if schedule_exists:
+            #    revsqlops.unschedule_card_qstash(condition)
+            res =caesarcrud.delete_data("revisioncardimages",f"revisioncardhash = '{revisioncardhash}' AND revisioncardimgname = '{oldimagename}' AND email = '{current_user}'")
+            images_exist = caesarcrud.check_exists(("*"),"revisioncardimages",f"revisioncardhash = '{revisioncardhash}' AND email = '{current_user}'")
+            print(images_exist)
+            if not images_exist:
+                print("hi")
+                res = caesarcrud.update_data(("revisioncardimgname",),("NULL",),"accountrevisioncards",condition=f"revisioncardhash = '{revisioncardhash}' AND email = '{current_user}'")
+
             if res:
                 return {"message":"revisioncard image was deleted."}
                 #return {"message":"revision card meta data changed."}
@@ -689,6 +695,13 @@ async def main():
     await server.serve()
 
 if __name__ == "__main__":
+    #print(image_data)
+
+    #images_data = caesarcrud.get_large_data(("revisioncardimgname","email","filetype","revisioncardhash","revisioncardimage"),"revisioncardimages")
+    #for image in images_data:
+    #    revisioncard = caesarcrud.tuple_to_json(("revisioncardimgname","email","filetype","revisioncardhash"),image)
+    #    res = caesarcrud.update_data(("revisioncardimgname",),("true",),"accountrevisioncards",f"revisioncardhash = '{revisioncard['revisioncardhash']}'")
+    #    print(revisioncard['revisioncardhash'])
     uvicorn.run("main:app",port=8080,log_level="info")
     #uvicorn.run()
     #asyncio.run(main())

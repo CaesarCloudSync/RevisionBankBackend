@@ -113,7 +113,7 @@ class CaesarCRUD:
         if len(fieldstoupdate) > 1:
             updatelist = []
             for field,value in zip(fieldstoupdate,values):
-                if type(value) != str:
+                if type(value) != str or value == "NULL":
                     fieldstr = f"{field} = {value}"
                     updatelist.append(fieldstr)
 
@@ -127,7 +127,7 @@ class CaesarCRUD:
             else:
                 return False
         else:          
-            if type(values[0]) != str:
+            if type(values[0]) != str or values[0] == "NULL":
                 updatestr = f"{fieldstoupdate[0]} = {values[0]}"
             else:
                 updatestr = f"{fieldstoupdate[0]} = '{values[0]}'"

@@ -22,11 +22,12 @@ class RevisionBankSQLOps:
 
         resblob = self.caesarcrud.post_data(("revisioncardimgname","email","filetype","revisioncardhash"),
                     (revisioncardimgname,current_user,filetype,revisioncardhash),tableblob)
+        res = self.caesarcrud.update_data(("revisioncardimgname",),("true",),"accountrevisioncards",condition=f"revisioncardhash = '{revisioncardhash}' AND email = '{current_user}'")
         resblob = self.caesarcrud.update_blob("revisioncardimage",revisioncardimage,tableblob,f"revisioncardhash = '{revisioncardhash}' AND revisioncardimgname = '{revisioncardimgname}'")
         return resblob    
-    def update_revisoncard_image(self,revisioncardimgname,revisioncardimage,revisioncardhash,oldrevisioncardimgname):
+    def update_revisoncard_image(self,current_user,revisioncardimgname,revisioncardimage,revisioncardhash,oldrevisioncardimgname):
         tableblob = "revisioncardimages"
-        condition = f"revisioncardhash = '{revisioncardhash}' AND revisioncardimgname = '{oldrevisioncardimgname}'"
+        condition = f"revisioncardhash = '{revisioncardhash}' AND revisioncardimgname = '{oldrevisioncardimgname}' AND email = '{current_user}'"
         filetype,revisioncardimage = revisioncardimage.split(",", 1)[0] + ",",revisioncardimage.split(",", 1)[1]
                            
 
