@@ -539,7 +539,7 @@ async def sendnowrevisioncard(data : JSONStructure = None, authorization: str = 
         print({f"error":f"{type(ex)},{str(ex)}"})
         return {f"error":f"{type(ex)},{str(ex)}"}
 @app.post('/sendscheduledrevisioncard') # POST # allow all origins all methods.
-async def sendnowrevisioncard(data : JSONStructure = None):
+async def sendscheduledrevisioncard(data : JSONStructure = None):
     try:
 
 

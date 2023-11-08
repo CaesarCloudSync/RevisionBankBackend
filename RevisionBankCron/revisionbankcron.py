@@ -58,7 +58,6 @@ class RevisionBankCron:
       
         card["email"] = current_user
         resp = requests.post("https://qstash.upstash.io/v2/schedules/https://revisionbankbackendsql-aoz2m6et2a-uc.a.run.app/sendscheduledrevisioncard",json=card,headers= {"Authorization": f"Bearer {self.qstash_access_token}","Upstash-Cron":f"{cronstr}"})
-        print(resp.json())
         scheduleId = resp.json()["scheduleId"]
         return scheduleId
 
