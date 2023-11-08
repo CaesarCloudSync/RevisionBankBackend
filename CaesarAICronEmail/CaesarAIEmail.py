@@ -14,10 +14,9 @@ class CaesarAIEmail:
     def send(**kwargs):
         load_dotenv(".env")
         email,subject,htmlmessage = kwargs["email"],kwargs["subject"],kwargs["message"]
-        try:
-            attachment = kwargs["attachment"]
-        except KeyError as kex:
-            attachment = None
+
+        attachment = kwargs.get("attachment")
+
         #print(email,subject,message)
         sender_email = "revisionbankedu@gmail.com"
         message = MIMEMultipart("alternative")
@@ -37,22 +36,22 @@ class CaesarAIEmail:
         # files should be a dictionary of filenames & base64 content
         #print(attachment)
         if attachment != None:
-            for file in attachment:
-                for key,val in file.items():
-                    if ".png" in key:
-                        part2 = MIMEBase('image', 'png')
-                        image = val.replace("data:image/png;base64,","")
-                        part2.set_payload(image)
-                        part2.add_header('Content-Transfer-Encoding', 'base64')
-                        part2['Content-Disposition'] = 'attachment; filename="%s"' % key
-                        message.attach(part2)
-                    elif ".jpg" in key or "jpeg" in key:
-                        part2 = MIMEBase('image', 'jpeg')
-                        image = val.replace("data:image/jpeg;base64,","")
-                        part2.set_payload(image)
-                        part2.add_header('Content-Transfer-Encoding', 'base64')
-                        part2['Content-Disposition'] = 'attachment; filename="%s"' % key
-                        message.attach(part2)
+            #for file in attachment:
+            for key,val in attachment.items():
+                if ".png" in key:
+                    part2 = MIMEBase('image', 'png')
+                    image = val.replace("data:image/png;base64,","")
+                    part2.set_payload(image)
+                    part2.add_header('Content-Transfer-Encoding', 'base64')
+                    part2['Content-Disposition'] = 'attachment; filename="%s"' % key
+                    message.attach(part2)
+                elif ".jpg" in key or "jpeg" in key:
+                    part2 = MIMEBase('image', 'jpeg')
+                    image = val.replace("data:image/jpeg;base64,","")
+                    part2.set_payload(image)
+                    part2.add_header('Content-Transfer-Encoding', 'base64')
+                    part2['Content-Disposition'] = 'attachment; filename="%s"' % key
+                    message.attach(part2)
 
             
 
@@ -64,7 +63,7 @@ class CaesarAIEmail:
                 sender_email, email, message.as_string()
             )
     @staticmethod
-    def send_attachment(receiver_email,subject,filename,htmlmessage):
+    def send_attachment_old(receiver_email,subject,filename,htmlmessage):
         sender_email = "revisionbankedu@gmail.com"
         password = base64.b64decode(os.environ.get("EMAIL_API_KEY").encode()).decode()
 

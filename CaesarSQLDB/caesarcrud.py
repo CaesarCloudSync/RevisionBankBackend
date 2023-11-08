@@ -131,7 +131,8 @@ class CaesarCRUD:
             if type(values[0]) != str or values[0] == "NULL":
                 updatestr = f"{fieldstoupdate[0]} = {values[0]}"
             else:
-                updatestr = f"{fieldstoupdate[0]} = '{values[0]}'"
+                value = values[0].replace("'","''",1000000)
+                updatestr = f"{fieldstoupdate[0]} = '{value}'"
             result = self.caesarsql.run_command(f"UPDATE {table} SET {updatestr} WHERE {condition};",self.caesarsql.fetch)
             if result == ():
                 return True

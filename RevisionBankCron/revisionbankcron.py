@@ -53,10 +53,10 @@ class RevisionBankCron:
             cronstr = f"*/{interval} * * * *"
         
 
-        
+        print(card)
         
         json_card = {"email":card["sendtoemail"],"subject":f"{card['subject']} - {card['revisioncardtitle']} | {current_user}","message":f"{card['revisioncard']}"}
-        resp = requests.post("https://qstash.upstash.io/v2/schedules/https://caesaraicronemail-qqbn26mgpa-uc.a.run.app/sendemail",json=json_card,headers= {"Authorization": f"Bearer {self.qstash_access_token}","Upstash-Cron":f"{cronstr}"})
+        resp = requests.post("https://qstash.upstash.io/v2/schedules/https://revisionbankbackendsql-aoz2m6et2a-uc.a.run.app/sendnowrevisioncard",json=card,headers= {"Authorization": f"Bearer {self.qstash_access_token}","Upstash-Cron":f"{cronstr}"})
         #print(resp)
         scheduleId = resp.json()["scheduleId"]
         return scheduleId

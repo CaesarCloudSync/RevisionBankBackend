@@ -515,12 +515,24 @@ async def unscheduleallrevisioncard(authorization: str = Header(None)):
 @app.post('/sendnowrevisioncard') # POST # allow all origins all methods.
 async def sendnowrevisioncard(data : JSONStructure = None, authorization: str = Header(None)):
     try:
+
         current_user = revisionbankjwt.secure_decode(authorization.replace("Bearer ",""))["email"]
         if current_user:
             data = dict(data)
-            message = f"""{data['revisioncards'][0]['revisioncardtitle']}<br>{data["revisioncards"][0]["revisioncard"]}"""
+            #print(data)
+            revisioncard = data["revisioncards"][0]
+            revisioncardtext = revisioncard["revisioncard"].replace("\n","<br>",10000)
+            revisioncardtitle = data['revisioncards'][0]['revisioncardtitle']
+            message = f"""{revisioncardtitle}<br>{revisioncardtext}"""
 
-            CaesarAIEmail.send(**{"email":data["sendtoemail"],"message":message,"subject":f"{data['revisioncards'][0]['subject']} - {current_user} Send Now"})
+            if revisioncard.get("revisioncardimgname"):
+                revisioncardimgname = revisioncard.get("revisioncardimgname")
+                revisioncardimage = revisioncard.get("revisioncardimage")
+                CaesarAIEmail.send(**{"email":data["sendtoemail"],"message":message,"subject":f"{data['revisioncards'][0]['subject']} | {revisioncardtitle} - {current_user}","attachment":dict(zip(revisioncardimgname,revisioncardimage))})
+                
+
+            else:
+                CaesarAIEmail.send(**{"email":data["sendtoemail"],"message":message,"subject":f"{data['revisioncards'][0]['subject']} | {revisioncardtitle} - {current_user}"})
 
             return {"message":"revision card sent"}
     except Exception as ex:
