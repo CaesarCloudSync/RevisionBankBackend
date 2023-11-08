@@ -538,6 +538,34 @@ async def sendnowrevisioncard(data : JSONStructure = None, authorization: str = 
     except Exception as ex:
         print({f"error":f"{type(ex)},{str(ex)}"})
         return {f"error":f"{type(ex)},{str(ex)}"}
+@app.post('/sendscheduledrevisioncard') # POST # allow all origins all methods.
+async def sendnowrevisioncard(data : JSONStructure = None):
+    try:
+
+
+        data = dict(data)
+        #print(data)
+        # {'sendtoemail': 'amari.lawal@gmail.com', 'subject': 'Technology for an Organizational Context', 'revisioncardtitle': '3.1 Topic 3: The Impact of IS on the organisation and business strategy', 'revisioncard': 'Technology for an Organizational Context<br>3.1 Topic 3: The Impact of IS on the organisation and business strategy<br>Resource: https://canvas.qa.com/courses/2751/pages/3-dot-1-topic-3-the-impact-of-is-on-the-organisation-and-business-strategy?module_item_id=323429<br>hello', 'revisionscheduleinterval': '16H', 'revisioncardimgname': [], 'revisioncardimage': []}
+        sendtoemail = data["sendtoemail"]
+        current_user = data["email"]
+        subject = data["subject"]
+        revisioncardtext = data["revisioncard"].replace("\n","<br>",1000000)
+        revisioncardtitle = data['revisioncardtitle']
+        message = f"""{revisioncardtitle}<br>{revisioncardtext}"""
+
+        if data.get("revisioncardimgname"):
+            revisioncardimgname = data.get("revisioncardimgname")
+            revisioncardimage = data.get("revisioncardimage")
+            CaesarAIEmail.send(**{"email":sendtoemail,"message":message,"subject":f"{subject} | {revisioncardtitle} - {current_user}","attachment":dict(zip(revisioncardimgname,revisioncardimage))})
+            
+
+        else:
+            CaesarAIEmail.send(**{"email":sendtoemail,"message":message,"subject":f"{subject} | {revisioncardtitle} - {current_user}"})
+
+        return {"message":"revision card sent"}
+    except Exception as ex:
+        print({f"error":f"{type(ex)},{str(ex)}"})
+        return {f"error":f"{type(ex)},{str(ex)}"}
 @app.post('/managechangecardimage') # POST # allow all origins all methods.
 async def managechangecardimage(data : JSONStructure = None, authorization: str = Header(None)):
     current_user = revisionbankjwt.secure_decode(authorization.replace("Bearer ",""))["email"]
