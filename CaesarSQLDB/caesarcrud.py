@@ -118,6 +118,7 @@ class CaesarCRUD:
                     updatelist.append(fieldstr)
 
                 else:
+                    value = value.replace("'","''",1000000)
                     fieldstr = f"{field} = '{value}'"
                     updatelist.append(fieldstr)
             updatestr = ', '.join(updatelist)
