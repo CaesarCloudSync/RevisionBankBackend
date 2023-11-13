@@ -91,7 +91,7 @@ class CaesarCRUD:
                 return {"error":"error syntax error.","error":result}
     def hex_to_base64(self,hex_file:bytes): # x0 unicode-like hex
         return  base64.b64encode(bytes.fromhex(hex_file.hex())).decode()
-    def get_large_data(self,fields:tuple,table:str,condition=None):
+    def get_large_data(self,fields:tuple,table:str,condition=None,reverse=False,reversecol="revisioncardid"):
     
         if len(fields) != 1:
             fieldlist = [f"{field}" for field in fields]
@@ -100,12 +100,13 @@ class CaesarCRUD:
             fieldstr = fields[0]
         
             #fieldstr = fieldstr.replace(", ","",100)
+        reversestr = f"ORDER BY {reversecol} DESC" if reverse == True else ""
         if condition:
             #print(f"""SELECT {fieldstr} FROM {table} WHERE {condition};""")
-            result = self.caesarsql.run_command_generator(f"""SELECT {fieldstr} FROM {table} WHERE {condition};""")
+            result = self.caesarsql.run_command_generator(f"""SELECT {fieldstr} FROM {table} WHERE {condition} {reversestr};""")
             return result
         else:
-            result = self.caesarsql.run_command_generator(f"""SELECT {fieldstr} FROM {table};""")
+            result = self.caesarsql.run_command_generator(f"""SELECT {fieldstr} FROM {table} {reversestr};""")
             return result
 
         
