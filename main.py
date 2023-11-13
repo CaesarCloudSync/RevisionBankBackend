@@ -292,7 +292,7 @@ async def getrevisioncardsws(websocket: WebSocket,client_id:str):
                         email_exists = caesarcrud.check_exists(("*"),table=caesarcreatetables.accountrevisioncards_table,condition=condition)
                         revisioncardfields = ("sendtoemail","subject","revisioncardtitle","revisionscheduleinterval","revisioncard","revisioncardimgname")
                         if email_exists:
-                            for revisioncard in caesarcrud.get_large_data(revisioncardfields,caesarcreatetables.accountrevisioncards_table,condition=condition):
+                            for revisioncard in caesarcrud.get_large_data(revisioncardfields,caesarcreatetables.accountrevisioncards_table,condition=condition,reverse=True):
                                 revisioncard = caesarcrud.tuple_to_json(revisioncardfields,revisioncard)
                                 sendtoemail = revisioncard["sendtoemail"]
                                 subject  = revisioncard["subject"]
