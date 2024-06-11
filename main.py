@@ -437,6 +437,8 @@ async def removerevisioncard(data : JSONStructure = None, authorization: str = H
             revisioncardhash = CaesarHash.hash_text(current_user + subject  + revisioncardtitle)
             condition = f"revisioncardhash = '{revisioncardhash}'"
             res = caesarcrud.delete_data("accountrevisioncards",condition)
+            blob_suffix =f"{current_user}-{revisioncardhash}"
+            caesaraigcp.delete_subset_media(blob_suffix)
             res = caesarcrud.delete_data("revisioncardimages",condition)
             schedule_exists = caesarcrud.check_exists(("*"),table=caesarcreatetables.schedule_table,condition=condition)
             if schedule_exists:

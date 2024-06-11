@@ -98,7 +98,13 @@ class CaesarAIGCP:
         except NotFound as nof:
             logging.warning("Delete - Object does not exist.")
             pass
-
+    def delete_subset_media(self,blob_suffix:str,bucket_name:str="revisioncardimages"):
+        bucket = self._client.get_bucket(bucket_name)
+        # list all objects in the directory
+        blobs = bucket.list_blobs()
+        for blob in blobs:
+            if blob_suffix in blob.name:
+                blob.delete()
 
 
 
