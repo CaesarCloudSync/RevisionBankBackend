@@ -5,24 +5,70 @@ import subprocess
 from urllib.parse import urlparse
 from typing import Any, Callable, Union
 
+class CaesarSQLDetails:
+    conStr = 'postgres://postgres.xkpuciyedkifvgkttkpu:EKwKq0L9KrJLC5Ii@aws-0-eu-central-1.pooler.supabase.com:6543/postgres'
+    p = urlparse(conStr)
+
+    pg_connection_dict = {
+        'dbname': p.scheme,
+        'user': p.username,
+        'password': p.password,
+        'port': p.port,
+        'host': p.hostname,
+        "autocommit" : True
+
+    }
+class CaesarSQLContextManager: 
+    
+    async def __aenter__(self) -> None:
+        self.aconn = await psycopg.AsyncConnection.connect(**CaesarSQLDetails.pg_connection_dict)
+        return self
+    async def run_command_generator(self,sqlcommand : str = None,arraysize:int =1000, datatuple : tuple =None,filename :str = None,verbose:int=1):
+        # Executes SQL Command or takes SQL file as input.
+        #if verbose == 1:
+            #if self.connection.is_connected():
+            #    db_Info = self.connection.get_server_info()
+            #    print("Connected to MySQL Server version ", db_Info)
+        if sqlcommand == None and filename == None:
+            print("Please input an SQL command or SQL filename.")
+        else:
+            if filename != None:
+               with open(filename) as f:
+                   sqlcommand = f.read()
+            try:
+                async with self.aconn.cursor() as cursor:
+                    #print(datatuple)
+                    await cursor.execute(sqlcommand,datatuple)
+                    if verbose == 1:
+                        print("SQL command executed.")
+                    while True:
+                        results = await cursor.fetchmany(arraysize)
+                        if not results:
+                            break
+                        for result in results:
+                            yield result
+            except Exception as poe:
+                print(f"{type(poe)} - {poe}")
+    async def tuple_to_json(self,fields:tuple,result:tuple):
+        if type(result[0]) == tuple:
+            final_result = []
+            for entry in result:
+                entrydict = dict(zip(fields,entry))
+                final_result.append(entrydict)
+            return final_result
+        elif type(result[0]) == str:
+            final_result = dict(zip(fields,result))
+            return final_result 
+    async def __aexit__(self, exc_type, exc, tb):
+        await self.aconn.close()
+                    
 class CaesarSQL:
     def __init__(self) -> None:
         # Makes SQL connection to remote server.
 
-        conStr = 'postgres://postgres.xkpuciyedkifvgkttkpu:EKwKq0L9KrJLC5Ii@aws-0-eu-central-1.pooler.supabase.com:6543/postgres'
-        p = urlparse(conStr)
 
-        pg_connection_dict = {
-            'dbname': p.scheme,
-            'user': p.username,
-            'password': p.password,
-            'port': p.port,
-            'host': p.hostname,
-            "autocommit" : True
 
-        }
-
-        self.connection = psycopg.connect(**pg_connection_dict)
+        self.connection = psycopg.connect(**CaesarSQLDetails.pg_connection_dict)
 
 
     def check_exists(self,result :Any):
@@ -173,3 +219,16 @@ class CaesarSQL:
 
 
 
+
+def test():
+    import asyncio
+
+    async def main():
+        async with  CaesarSQLContextManager() as cex:
+            async for test in  cex.run_command_generator("SELECT (email,password) FROM users;"):
+                print(await cex.tuple_to_json(("email","password"),test))
+                
+        await asyncio.sleep(1)
+        print('world')
+
+    asyncio.run(main())
