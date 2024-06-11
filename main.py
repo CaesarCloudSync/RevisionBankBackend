@@ -19,7 +19,7 @@ from RevisionBankExceptions.revisionbankexceptions import *
 from RevisionBankCron.revisionbankcron import RevisionBankCron
 from CaesarSQLDB.caesar_create_tables import CaesarCreateTables
 from RevisionBankUtils.revisionbankutils import RevisionBankUtils
-
+from CaesarSQLDB.caesarsql import CaesarSQLContextManager
 from RevisionBankSQLOps.revisionbanksqlops import RevisionBankSQLOps
 
 load_dotenv(".env")
@@ -282,7 +282,6 @@ async def getrevisioncardsws(websocket: WebSocket,client_id:str):
                 authinfo = await websocket.receive_json()
                 #print(authinfo)
                 authorization = authinfo["headers"]["Authorization"]
-                print(authorization)
                 current_user = revisionbankjwt.secure_decode(authorization.replace("Bearer ",""))["email"]
                 if current_user:
                     try:
@@ -290,42 +289,44 @@ async def getrevisioncardsws(websocket: WebSocket,client_id:str):
                         email_exists = caesarcrud.check_exists(("*"),table=caesarcreatetables.accountrevisioncards_table,condition=condition)
                         revisioncardfields = ("sendtoemail","subject","revisioncardtitle","revisionscheduleinterval","revisioncard","revisioncardimgname")
                         if email_exists:
-                            for revisioncard in caesarcrud.get_large_data(revisioncardfields,caesarcreatetables.accountrevisioncards_table,condition=condition,reverse=True):
-                                revisioncard = caesarcrud.tuple_to_json(revisioncardfields,revisioncard)
-                                sendtoemail = revisioncard["sendtoemail"]
-                                subject  = revisioncard["subject"]
-                                revisioncardtitle = revisioncard["revisioncardtitle"]
-                                revisioncardimgname = revisioncard.get("revisioncardimgname")
-                                revisionscheduleinterval = revisioncard["revisionscheduleinterval"]
-                                revisioncardtext = revisioncard["revisioncard"]
-                                revisioncardhash = CaesarHash.hash_text(current_user + subject  + revisioncardtitle)
-                                condition = f"revisioncardhash = '{revisioncardhash}'"
-                                #print(condition)
-                                print(revisioncardimgname)
+                            async with  CaesarSQLContextManager() as caesarsqlcm:
+                                async for revisioncard  in  caesarsqlcm.run_command_generator(f"SELECT (sendtoemail,subject,revisioncardtitle,revisionscheduleinterval,revisioncard,revisioncardimgname) FROM {caesarcreatetables.accountrevisioncards_table} WHERE {condition} ORDER BY revisioncardid DESC;"):
+                                    revisioncard = await caesarsqlcm.tuple_to_json(revisioncardfields,revisioncard)
+                                    revisioncard = revisioncard[0]
+                                    sendtoemail = revisioncard["sendtoemail"]
+                                    subject  = revisioncard["subject"]
+                                    revisioncardtitle = revisioncard["revisioncardtitle"]
+                                    revisioncardimgname = revisioncard.get("revisioncardimgname")
+                                    revisionscheduleinterval = revisioncard["revisionscheduleinterval"]
+                                    revisioncardtext = revisioncard["revisioncard"]
+                                    revisioncardhash = CaesarHash.hash_text(current_user + subject  + revisioncardtitle)
+                                    condition = f"revisioncardhash = '{revisioncardhash}'"
+                                    #print(condition)
+                                    print(revisioncardtext)
 
-                                if revisioncardimgname:
-                                
-                                    imagedata = caesarcrud.get_data(("revisioncardimgname","filetype","revisioncardhash","revisioncardimage"),caesarcreatetables.revisioncardimage_table,condition=condition)
-                                    revisioncardimgname = [image["revisioncardimgname"] for image in imagedata]
-                                    revisioncardimage = []
+                                    if revisioncardimgname:
                                     
-                                    for image in imagedata:
+                                        imagedata = caesarcrud.get_data(("revisioncardimgname","filetype","revisioncardhash","revisioncardimage"),caesarcreatetables.revisioncardimage_table,condition=condition)
+                                        revisioncardimgname = [image["revisioncardimgname"] for image in imagedata]
+                                        revisioncardimage = []
+                                        
+                                        for image in imagedata:
 
-                                        imageb64_string =  caesarcrud.hex_to_base64(image["revisioncardimage"])
+                                            imageb64_string =  caesarcrud.hex_to_base64(image["revisioncardimage"])
 
-                                        final_imageb64 = f"{image['filetype']}{imageb64_string}"
-                                        revisioncardimage.append(final_imageb64 )
-                                    #print(revisioncardimage)
-                                    await manager.broadcast(json.dumps({"revisioncardtitle":revisioncardtitle,"subject":subject,
-                                        "revisionscheduleinterval":revisionscheduleinterval,"revisioncard":revisioncardtext,"revisioncardimgname":revisioncardimgname,"revisioncardimage":revisioncardimage,"sendtoemail":sendtoemail}))
-                                
-                                else:
-                                    revisioncardimgname = []
-                                    revisioncardimage = []
-                                    await manager.broadcast(json.dumps({"revisioncardtitle":revisioncardtitle,"subject":subject,
-                                                                          "revisionscheduleinterval":revisionscheduleinterval,"revisioncard":revisioncardtext,
-                                                                          "revisioncardimgname":revisioncardimgname,"revisioncardimage":revisioncardimage,
-                                                                          "sendtoemail":sendtoemail}))
+                                            final_imageb64 = f"{image['filetype']}{imageb64_string}"
+                                            revisioncardimage.append(final_imageb64 )
+                                        #print(revisioncardimage)
+                                        await manager.broadcast(json.dumps({"revisioncardtitle":revisioncardtitle,"subject":subject,
+                                            "revisionscheduleinterval":revisionscheduleinterval,"revisioncard":revisioncardtext,"revisioncardimgname":revisioncardimgname,"revisioncardimage":revisioncardimage,"sendtoemail":sendtoemail}))
+                                    
+                                    else:
+                                        revisioncardimgname = []
+                                        revisioncardimage = []
+                                        await manager.broadcast(json.dumps({"revisioncardtitle":revisioncardtitle,"subject":subject,
+                                                                            "revisionscheduleinterval":revisionscheduleinterval,"revisioncard":revisioncardtext,
+                                                                            "revisioncardimgname":revisioncardimgname,"revisioncardimage":revisioncardimage,
+                                                                            "sendtoemail":sendtoemail}))
                             
                             await manager.broadcast(json.dumps({"message":"all sent."}))
                             
@@ -335,7 +336,7 @@ async def getrevisioncardsws(websocket: WebSocket,client_id:str):
                             await manager.broadcast(json.dumps({"message":"No revision cards"}))
                             #return {"message":"No revision cards"} # Send in shape of data
                     except Exception as ex:
-                        pass
+                        print(type(ex),ex)
                         #await manager.broadcast(json.dumps({f"error":f"{type(ex)},{str(ex)}"})) 
                 elif not current_user:
                     await manager.broadcast(json.dumps({"message":"No user."}))

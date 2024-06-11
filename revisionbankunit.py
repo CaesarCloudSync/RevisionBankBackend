@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 load_dotenv(".env")
 import websockets
 import asyncio
+from websockets.exceptions import ConnectionClosedOK
 from CaesarSQLDB.caesarcrud import CaesarCRUD
 from CaesarSQLDB.caesarhash import CaesarHash
 from RevisionBankSQLOps.revisionbanksqlops import RevisionBankSQLOps
@@ -21,8 +22,17 @@ def getrevisioncards(url, data=""):
         async with websockets.connect(url) as websocket:
             print("send")
             await websocket.send(data)
-            response = await websocket.recv()
-            print(type(response))
+            while True:
+                try:
+                    response = await websocket.recv()
+                    result = json.loads(response)
+                    print(result)
+                    if "message" in result:
+                        await websocket.close()
+                except ConnectionClosedOK as eok:
+                    break
+                
+                
     return asyncio.get_event_loop().run_until_complete(inner())
 
 class RevisionBankUnittest(unittest.TestCase):
@@ -56,7 +66,7 @@ class RevisionBankUnittest(unittest.TestCase):
                                                     "revisioncard":"Hello World","revisionscheduleinterval":"30MI","revisioncardimgname":[],"revisioncardimage":[]},{"subject":"PA Consulting Test 1","revisioncardtitle":"Network Contacts Test 1",
                                                     "revisioncard":"Hello World Again","revisionscheduleinterval":"6H","revisioncardimgname":[],"revisioncardimage":[]}]}},headers=header)
         self.assertEqual(response.json().get("message"),"revision card stored")
-    def test_get_revisioncards(self):
+    def test_get_revision_cards(self):
         response = requests.post(f"{uri}/loginapi",json={"email":"amari.sql@gmail.com","password":"kya63amari"})
         access_token = response.json()["access_token"]
         header = {"headers":{"Authorization": f"Bearer {access_token}"}}

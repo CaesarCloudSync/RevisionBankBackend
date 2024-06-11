@@ -49,6 +49,37 @@ class CaesarSQLContextManager:
                             yield result
             except Exception as poe:
                 print(f"{type(poe)} - {poe}")
+    async def run_command(self,sqlcommand : str = None,result_function : Callable =None,datatuple : tuple =None,filename :str = None,verbose:int=0):
+        # Executes SQL Command or takes SQL file as input.
+        #if verbose == 1:
+            #if self.connection.is_connected():
+            #    db_Info = self.connection.get_server_info()
+            #    print("Connected to MySQL Server version ", db_Info)
+        if sqlcommand == None and filename == None:
+            print("Please input an SQL command or SQL filename.")
+        else:
+            if filename != None:
+               with open(filename) as f:
+                   sqlcommand = f.read()
+            
+            async with self.connection.cursor() as cursor:
+                #print(datatuple)
+                await cursor.execute(sqlcommand,datatuple)
+
+                result = await cursor.fetchall()
+                    
+                
+                if result_function != None:
+                    new_result = result_function(result)
+                elif result_function == None:
+                    new_result = None
+
+                #self.connection.commit()
+            if verbose == 1:
+                print("SQL command executed.")
+                return new_result
+            else:
+                return new_result
     async def tuple_to_json(self,fields:tuple,result:tuple):
         if type(result[0]) == tuple:
             final_result = []
@@ -59,6 +90,7 @@ class CaesarSQLContextManager:
         elif type(result[0]) == str:
             final_result = dict(zip(fields,result))
             return final_result 
+        
     async def __aexit__(self, exc_type, exc, tb):
         await self.aconn.close()
                     
