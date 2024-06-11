@@ -39,6 +39,26 @@ class CaesarAIGCP:
         #returns a public url
         self.make_blob_public(blob_name,bucket_name)
         return blob.public_url
+    def rename_blob(self,blob_name, new_blob_name:str,bucket_name:str="revisioncardimages"):
+        
+        """
+        Function for renaming file in a bucket buckets.
+
+        inputs
+        -----
+        bucket_name: name of bucket
+        blob_name: str, name of file 
+            ex. 'data/some_location/file_name'
+        new_blob_name: str, name of file in new directory in target bucket 
+            ex. 'data/destination/file_name'
+        """
+
+
+        bucket = self._client.bucket(bucket_name)
+        blob = bucket.blob(blob_name)
+        new_blob = bucket.rename_blob(blob, str(new_blob_name))
+        self.make_blob_public(new_blob_name,bucket_name)
+        return new_blob.public_url
     def get_media(self,blob_name:str,bucket_name:str="revisioncardimages"):
         try:
             bucket =self._client.get_bucket(bucket_name)

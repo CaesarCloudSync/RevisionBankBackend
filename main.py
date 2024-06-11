@@ -583,13 +583,22 @@ async def managechangecardimage(data : JSONStructure = None, authorization: str 
             subject = oldcard_data["subject"]
             revisioncardtitle = oldcard_data["revisioncardtitle"]
             revisioncardhash = CaesarHash.hash_text(current_user + subject  + revisioncardtitle)
-            condition = f"revisioncardhash = '{revisioncardhash}'"
-            schedule_exists = caesarcrud.check_exists(("*"),table=caesarcreatetables.schedule_table,condition=condition)
+            sched_condition = f"revisioncardhash = '{revisioncardhash}'"
+            schedule_exists = caesarcrud.check_exists(("*"),table=caesarcreatetables.schedule_table,condition=sched_condition)
             if schedule_exists:
-                revsqlops.unschedule_card_qstash(condition)
-                res = caesarcrud.delete_data("scheduledcards",condition=condition)
-            res = revsqlops.update_revisoncard_image(current_user,newrevisioncardimgname,newimage,revisioncardhash,oldrevisioncardimgname)
-            if res:
+                revsqlops.unschedule_card_qstash(sched_condition)
+                res = caesarcrud.delete_data("scheduledcards",condition=sched_condition)
+            condition = f"revisioncardhash = '{revisioncardhash}' AND revisioncardimgname = '{oldrevisioncardimgname}'"
+            image = io.BytesIO(base64.b64decode(newimage.split(",")[-1]))
+            old_blob_name =f"{oldrevisioncardimgname}-{current_user}-{revisioncardhash}"
+            new_blob_name = f"{newrevisioncardimgname}-{current_user}-{revisioncardhash}"
+            caesaraigcp.rename_blob(old_blob_name,new_blob_name)
+            image_public_url = caesaraigcp.upload_to_bucket(image,f"{newrevisioncardimgname}-{current_user}-{revisioncardhash}")
+            resblob = caesarcrud.update_data(("revisioncardimgname","revisioncardimage",),(newrevisioncardimgname,image_public_url),"revisioncardimages",condition=condition)
+
+
+            #res = revsqlops.update_revisoncard_image(current_user,newrevisioncardimgname,newimage,revisioncardhash,oldrevisioncardimgname)
+            if resblob:
                 return {"message":"revisioncard image was replaced."}
             else:
                 return {"error":"error when updating."}

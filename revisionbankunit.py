@@ -122,7 +122,17 @@ class RevisionBankUnittest(unittest.TestCase):
             self.assertEqual(response.json().get("message"),"revision card meta data changed.")
 
         #self.assertEqual(response.json().get("message"),"revision card scheduled")
-                    
+    def test_manage_change_card_image(self):
+            response = requests.post(f"{uri}/loginapi",json={"email":"amari.sql@gmail.com","password":"kya63amari"})
+            self.assertNotEqual(None,response.json().get("access_token"))
+            access_token = response.json().get("access_token")
+            header = {"Authorization": f"Bearer {access_token}"}
+            with open("/home/amari/Desktop/RevisionBankData/RevisionBankBackend/RevisionBankUnitImages/batman.jpeg","rb") as f2:
+                batman = f"data:image/png;base64,{base64.b64encode(f2.read()).decode()}"
+            card_data = {"subject":"PA Consulting Test 2","revisioncardtitle":"Network Contacts Test 2","oldimagename":"car0.jpeg","newimagename":"batman.jpeg","newimage":batman}
+            response = requests.post(f"{uri}/managechangecardimage",json=card_data,headers=header)
+            print(response.json())
+            self.assertEqual(response.json().get("message"),"revisioncard image was replaced.")
 
 
 
@@ -132,9 +142,6 @@ class RevisionBankUnittest(unittest.TestCase):
 
         
         #print(response.json())
-
-class RevisionBankManageRevisionCards(unittest.TestCase):
-    pass
 
 
 
