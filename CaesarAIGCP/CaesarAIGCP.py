@@ -7,8 +7,9 @@ from google.api_core.exceptions import NotFound
 class CaesarAIGCP:
     def __init__(self) -> None:
         dir_path = os.path.dirname(os.path.realpath(__file__))
-        with open(f"{dir_path}/revisionbankbackendsecrets.json") as f:
-            service_info = json.loads(f.read())
+        with open(f"{dir_path}/creds.txt") as f:
+            service_base64 = f.read()
+        service_info = json.loads(base64.b64decode(service_base64.encode()).decode())
         self._client = storage.Client.from_service_account_info(service_info)
 
     def make_blob_public(self,blob_name,bucket_name:str="revisioncardimages"):
