@@ -658,18 +658,17 @@ async def manageremovecardimage(data : JSONStructure = None, authorization: str 
             schedule_exists = caesarcrud.check_exists(("*"),table=caesarcreatetables.schedule_table,condition=condition)
             #if schedule_exists:
             #    revsqlops.unschedule_card_qstash(condition)
+            blob_name = f"{oldimagename}-{current_user}-{revisioncardhash}"
+            caesaraigcp.delete_media(blob_name)
             res =caesarcrud.delete_data("revisioncardimages",f"revisioncardhash = '{revisioncardhash}' AND revisioncardimgname = '{oldimagename}' AND email = '{current_user}'")
             images_exist = caesarcrud.check_exists(("*"),"revisioncardimages",f"revisioncardhash = '{revisioncardhash}' AND email = '{current_user}'")
-            print(images_exist)
             if not images_exist:
                 print("hi")
                 res = caesarcrud.update_data(("revisioncardimgname",),("NULL",),"accountrevisioncards",condition=f"revisioncardhash = '{revisioncardhash}' AND email = '{current_user}'")
 
-            if res:
-                return {"message":"revisioncard image was deleted."}
-                #return {"message":"revision card meta data changed."}
-            else:
-                return {"error":"error when deleting data."}
+         
+            return {"message":"revisioncard image was deleted."}
+
         except Exception as ex:
             #print({f"error":f"{type(ex)},{str(ex)}"})
             return {f"error":f"{type(ex)},{str(ex)}"}

@@ -146,6 +146,16 @@ class RevisionBankUnittest(unittest.TestCase):
             print(response.json())
             self.assertEqual(response.json().get("message"),"revisioncard image was added.")
 
+    def test_manage_remove_card_image(self):
+            response = requests.post(f"{uri}/loginapi",json={"email":"amari.sql@gmail.com","password":"kya63amari"})
+            self.assertNotEqual(None,response.json().get("access_token"))
+            access_token = response.json().get("access_token")
+            header = {"Authorization": f"Bearer {access_token}"}
+            card_data = {"subject":"PA Consulting Test 2","revisioncardtitle":"Network Contacts Test 2","oldimagename":"nightwing.jpeg"}
+            response = requests.post(f"{uri}/manageremovecardimage",json=card_data,headers=header)
+            print(response.json())
+            self.assertEqual(response.json().get("message"),"revisioncard image was deleted.")
+
 
 
 
