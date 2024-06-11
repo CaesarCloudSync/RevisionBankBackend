@@ -1,5 +1,6 @@
 import base64
 from CaesarSQLDB.caesarsql import CaesarSQL
+from psycopg import ProgrammingError
 class CaesarCRUD:
     def __init__(self) -> None:
         self.caesarsql = CaesarSQL()
@@ -8,16 +9,24 @@ class CaesarCRUD:
         if type(fields) == tuple:
             fieldlist = [f"{field} {typestr}"for field,typestr in zip(fields,types)]
             fieldstr = ', '.join(fieldlist)
-            result = self.caesarsql.run_command(f"CREATE TABLE IF NOT EXISTS {table} ({primary_key} int NOT NULL AUTO_INCREMENT,{fieldstr}, PRIMARY KEY ({primary_key}) );",self.caesarsql.fetch)
-            if result == ():
-                return {"message":f"{table} table was created."}
-            else:
-                return {"error":f"error table was not created.","error":result}
+            try:
+                result = self.caesarsql.run_command(f"CREATE TABLE IF NOT EXISTS {table} ({primary_key} serial PRIMARY KEY,{fieldstr});",self.caesarsql.fetch)
+            except ProgrammingError as pex:
+                if "didn't produce a result" in str(pex):
+                    return {"message":f"{table} table was created."}
+                else:
+                    raise ProgrammingError(pex)
+
+
         else:
             fieldstr = f"{fields} {types}"
-            result = self.caesarsql.run_command(f"CREATE TABLE IF NOT EXISTS {table} ({primary_key} int NOT NULL AUTO_INCREMENT,{fieldstr}, PRIMARY KEY ({primary_key}) );",self.caesarsql.fetch)
-            if result == ():
-                return {"message":f"{table} table was created."}
+            try:
+                result = self.caesarsql.run_command(f"CREATE TABLE IF NOT EXISTS {table} ({primary_key} serial PRIMARY KEY,{fieldstr});",self.caesarsql.fetch)
+            except ProgrammingError as pex:
+                if "didn't produce a result" in str(pex):
+                    return {"message":f"{table} table was created."}
+                else:
+                    raise ProgrammingError(pex)
     def base64_to_hex(self,value):
         value = value.encode()
         value = base64.decodebytes(value).hex()
@@ -36,8 +45,8 @@ class CaesarCRUD:
 
             #values = tuple(map(convert_to_hex,values))
 
-            result = self.caesarsql.run_command(f"INSERT INTO {table} {fieldstr} VALUES {valuestr};",self.caesarsql.fetch,datatuple=values)
-            if result == ():
+            result = self.caesarsql.run_command(f"INSERT INTO {table} {fieldstr} VALUES {valuestr} returning {fields[0]};",self.caesarsql.fetch,datatuple=values)
+            if len(result) != 0:
                 return True
             else:
                 return False
@@ -73,25 +82,25 @@ class CaesarCRUD:
         if condition:
             #print(f"""SELECT {fieldstr} FROM {table} WHERE {condition};""")
             result = self.caesarsql.run_command(f"""SELECT {fieldstr} FROM {table} WHERE {condition} LIMIT {str(getamount)};""",self.caesarsql.fetch)
-            if result == ():
+            if len(result) == 0:
                 return False
-            elif result != () and type(result) == tuple:
+            elif len(result) != 0 and type(result) == list:
                 result = self.tuple_to_json(fields,result)
                 return result
             else:
                 return {"error":"error syntax error.","error":result}
         else:
             result = self.caesarsql.run_command(f"""SELECT {fieldstr} FROM {table} LIMIT {str(getamount)};""",self.caesarsql.fetch)
-            if result == ():
+            if len(result) == 0:
                 return False
-            elif result != () and type(result) == tuple:
+            elif len(result) != 0 and type(result) == list:
                 result = self.tuple_to_json(fields,result)
                 return result
             else:
                 return {"error":"error syntax error.","error":result}
     def hex_to_base64(self,hex_file:bytes): # x0 unicode-like hex
         return  base64.b64encode(bytes.fromhex(hex_file.hex())).decode()
-    def get_large_data(self,fields:tuple,table:str,condition=None,reverse=False,reversecol="revisioncardid"):
+    def get_large_data(self,fields:tuple,table:str,condition=None):
     
         if len(fields) != 1:
             fieldlist = [f"{field}" for field in fields]
@@ -100,13 +109,12 @@ class CaesarCRUD:
             fieldstr = fields[0]
         
             #fieldstr = fieldstr.replace(", ","",100)
-        reversestr = f"ORDER BY {reversecol} DESC" if reverse == True else ""
         if condition:
             #print(f"""SELECT {fieldstr} FROM {table} WHERE {condition};""")
-            result = self.caesarsql.run_command_generator(f"""SELECT {fieldstr} FROM {table} WHERE {condition} {reversestr};""")
+            result = self.caesarsql.run_command_generator(f"""SELECT {fieldstr} FROM {table} WHERE {condition};""")
             return result
         else:
-            result = self.caesarsql.run_command_generator(f"""SELECT {fieldstr} FROM {table} {reversestr};""")
+            result = self.caesarsql.run_command_generator(f"""SELECT {fieldstr} FROM {table};""")
             return result
 
         
@@ -114,7 +122,7 @@ class CaesarCRUD:
         if len(fieldstoupdate) > 1:
             updatelist = []
             for field,value in zip(fieldstoupdate,values):
-                if type(value) != str or value == "NULL":
+                if type(value) != str:
                     fieldstr = f"{field} = {value}"
                     updatelist.append(fieldstr)
 
@@ -123,33 +131,34 @@ class CaesarCRUD:
                     fieldstr = f"{field} = '{value}'"
                     updatelist.append(fieldstr)
             updatestr = ', '.join(updatelist)
-            result = self.caesarsql.run_command(f"UPDATE {table} SET {updatestr} WHERE {condition};",self.caesarsql.fetch)
-            if result == ():
+            result = self.caesarsql.run_command(f"UPDATE {table} SET {updatestr} WHERE {condition} returning {fieldstoupdate[0]};",self.caesarsql.fetch)
+            if len(result) == 0:
                 return True
             else:
                 return False
         else:          
-            if type(values[0]) != str or values[0] == "NULL":
+            if type(values[0]) != str:
                 updatestr = f"{fieldstoupdate[0]} = {values[0]}"
             else:
                 value = values[0].replace("'","''",1000000)
                 updatestr = f"{fieldstoupdate[0]} = '{value}'"
-            result = self.caesarsql.run_command(f"UPDATE {table} SET {updatestr} WHERE {condition};",self.caesarsql.fetch)
-            if result == ():
+            result = self.caesarsql.run_command(f"UPDATE {table} SET {updatestr} WHERE {condition} returning {fieldstoupdate[0]};",self.caesarsql.fetch)
+            if len(result) == 0:
                 return True
             else:
                 return False
-
+    # TODO Cgeck This works
     def update_blob(self,fieldstoupdate:str,value:str,table=str,condition=str):
-        updatestr = "UPDATE %s SET %s = x'%s' WHERE %s;" % (table,fieldstoupdate,self.base64_to_hex(value),condition)
+        updatestr = "UPDATE %s SET %s = x'%s' WHERE %s returning %s;" % (table,fieldstoupdate,self.base64_to_hex(value),condition,fieldstoupdate[0])
         result = self.caesarsql.run_command(updatestr,self.caesarsql.fetch)
-        if result == ():
+        if len(result) == 0:
             return True
         else:
             return False
     def delete_data(self,table:str,condition:str):
-        result = self.caesarsql.run_command(f"DELETE FROM {table} WHERE {condition};",self.caesarsql.fetch)
-        if result == ():
+        field_name = condition.split("=")[0].strip()
+        result = self.caesarsql.run_command(f"DELETE FROM {table} WHERE {condition} returning {field_name};",self.caesarsql.fetch)
+        if len(result) == 0:
             return True
         else:
             return False
@@ -178,23 +187,3 @@ class CaesarCRUD:
                 return {"message":"syntax error or table doesn't exist.","error":result}
 
     
-if __name__ == "__main__":
-    caesarcrud = CaesarCRUD()
-    #datas = [("Amari","Lawal"),("Billy","Bob"),("Bobby","Jim"),("Loggy","Lag")]
-    fields = ("Amari","Lawal")
-    #fieldsupdate = tuple(fields.keys())
-    #valuesupdate = tuple(fields.values())
-    fields = ("Bioll")
-    print(fields)
-    #caesarcrud.create_table("testid",fields,("varchar(255)","varchar(255)"),"test")
-    #for data in datas:
-    #    caesarcrud.post_data(fields,data,"test")
-    #resultgen = caesarcrud.get_large_data(("*"),"test","firstname = 'Billy'")
-    #for result in resultgen:
-    #    print(result)
-    #val = tuple(["hi"])
-    #print(val)
-    
-
-
-    #caesarcrud.post_data()

@@ -6,7 +6,6 @@ import asyncio
 import uvicorn
 import requests
 from dotenv import load_dotenv
-from csv_to_db import ImportCSV# 
 from fastapi import FastAPI, Header
 from typing import Dict,List,Any,Union
 from CaesarSQLDB.caesarcrud import CaesarCRUD
@@ -32,10 +31,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-importcsv = ImportCSV("RevisionBankDB",maindb=0)
-importcsvqp = ImportCSV("RevisionBankDB",maindb= 1)
-importcsvqp1 = ImportCSV("RevisionBankQPs1",maindb=2)
-revisionbankutils = RevisionBankUtils(importcsv)
+
+
 
 caesarcrud = CaesarCRUD()
 revisionbankjwt = RevisionBankJWT(caesarcrud)
@@ -285,6 +282,7 @@ async def getrevisioncardsws(websocket: WebSocket,client_id:str):
                 authinfo = await websocket.receive_json()
                 #print(authinfo)
                 authorization = authinfo["headers"]["Authorization"]
+                print(authorization)
                 current_user = revisionbankjwt.secure_decode(authorization.replace("Bearer ",""))["email"]
                 if current_user:
                     try:
@@ -303,6 +301,7 @@ async def getrevisioncardsws(websocket: WebSocket,client_id:str):
                                 revisioncardhash = CaesarHash.hash_text(current_user + subject  + revisioncardtitle)
                                 condition = f"revisioncardhash = '{revisioncardhash}'"
                                 #print(condition)
+                                print(revisioncardimgname)
 
                                 if revisioncardimgname:
                                 

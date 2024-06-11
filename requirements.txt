@@ -31,7 +31,7 @@ Flask-JWT-Extended==4.3.1
 Flask-Mail==0.9.1
 Flask-RESTful==0.3.9
 Flask-WTF==0.15.1
-lxml==4.8.0
+
 gunicorn==20.1.0
 idna==3.3
 ipykernel==6.6.0
@@ -75,7 +75,9 @@ websockets
 typer==0.4.0
 typing_extensions==4.0.1
 urllib3==1.26.7
-
+python-dotenv
 wasabi==0.9.0
 wcwidth==0.2.5
 Werkzeug==2.0.2
+psycopg[c]
+google-cloud-storage

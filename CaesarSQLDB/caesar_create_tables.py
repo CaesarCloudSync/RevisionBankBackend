@@ -1,16 +1,17 @@
+from CaesarSQLDB.caesarcrud import CaesarCRUD
 class CaesarCreateTables:
     def __init__(self) -> None:
         self.usersfields = ("email","password")
         self.studentsubscriptionsfields =  ("hostemail","email","password","emailsleft")
         self.revisioncardfields = ("email","sendtoemail","subject","revisioncardtitle","revisionscheduleinterval","revisioncard","revisioncardimgname","revisioncardhash")
-        self.revisioncardimagefields = ("revisioncardimgname","email","filetype","revisioncardhash","revisioncardimage")
+        self.revisioncardimagefields = ("revisioncardimgname","email","filetype","revisioncardhash","revisioncardurl")
         self.scheduledcardfields = ("email","revisioncardhash","scheduleId")
         self.schedule_table = "scheduledcards"
         self.accountrevisioncards_table = "accountrevisioncards"
         self.revisioncardimage_table = "revisioncardimages"
         
 
-    def create(self,caesarcrud):
+    def create(self,caesarcrud : CaesarCRUD):
         caesarcrud.create_table("userid",self.usersfields,
         ("varchar(255) NOT NULL","varchar(255) NOT NULL"),
         "users")
@@ -21,9 +22,8 @@ class CaesarCreateTables:
         ("varchar(255) NOT NULL","varchar(255) NOT NULL","varchar(255) NOT NULL","varchar(255) NOT NULL","varchar(255) NOT NULL","TEXT NOT NULL","varchar(255)","TEXT NOT NULL"),
         "accountrevisioncards")
         caesarcrud.create_table("revisioncardimageid",self.revisioncardimagefields,
-        ("varchar(255) NOT NULL","varchar(255) NOT NULL","varchar(255) NOT NULL","varchar(255) NOT NULL","MEDIUMBLOB"),
+        ("varchar(255) NOT NULL","varchar(255) NOT NULL","varchar(255) NOT NULL","varchar(255) NOT NULL","TEXT NOT NULL"),
         "revisioncardimages")
         caesarcrud.create_table("schedulecardsid",self.scheduledcardfields,
         ("varchar(255) NOT NULL","TEXT NOT NULL","TEXT NOT NULL"),
         "scheduledcards")
-
