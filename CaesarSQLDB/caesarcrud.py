@@ -132,10 +132,7 @@ class CaesarCRUD:
                     updatelist.append(fieldstr)
             updatestr = ', '.join(updatelist)
             result = self.caesarsql.run_command(f"UPDATE {table} SET {updatestr} WHERE {condition} returning {fieldstoupdate[0]};",self.caesarsql.fetch)
-            if len(result) == 0:
-                return True
-            else:
-                return False
+            return result
         else:          
             if type(values[0]) != str:
                 updatestr = f"{fieldstoupdate[0]} = {values[0]}"
@@ -143,10 +140,9 @@ class CaesarCRUD:
                 value = values[0].replace("'","''",1000000)
                 updatestr = f"{fieldstoupdate[0]} = '{value}'"
             result = self.caesarsql.run_command(f"UPDATE {table} SET {updatestr} WHERE {condition} returning {fieldstoupdate[0]};",self.caesarsql.fetch)
-            if len(result) == 0:
-                return True
-            else:
-                return False
+
+            return result
+
     # TODO Cgeck This works
     def update_blob(self,fieldstoupdate:str,value:str,table=str,condition=str):
         updatestr = "UPDATE %s SET %s = x'%s' WHERE %s returning %s;" % (table,fieldstoupdate,self.base64_to_hex(value),condition,fieldstoupdate[0])

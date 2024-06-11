@@ -98,6 +98,7 @@ class RevisionBankUnittest(unittest.TestCase):
         access_token = response.json().get("access_token")
         header = {"Authorization": f"Bearer {access_token}"}
         response = requests.post(f"{uri}/changerevisioncard",json=json_data,headers=header)
+        print(response.json())
         self.assertEqual(response.json().get("message"),"revision card changed.")
         
     def test_update_revsisioncard_metadata(self):

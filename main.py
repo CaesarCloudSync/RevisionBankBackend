@@ -185,6 +185,7 @@ async def changerevisioncard(data : JSONStructure = None, authorization: str = H
             if schedule_exists:
                 revsqlops.unschedule_card_qstash(condition)
             res = caesarcrud.update_data(("revisioncard",),(revisioncard["newrevisioncard"],),caesarcreatetables.accountrevisioncards_table,condition=f"revisioncardhash = '{revisioncardhash}'")
+            print("hi")
             if res:
                 return {"message":"revision card changed."}
             else:
