@@ -134,6 +134,18 @@ class RevisionBankUnittest(unittest.TestCase):
             print(response.json())
             self.assertEqual(response.json().get("message"),"revisioncard image was replaced.")
 
+    def test_manage_add_card_image(self):
+            response = requests.post(f"{uri}/loginapi",json={"email":"amari.sql@gmail.com","password":"kya63amari"})
+            self.assertNotEqual(None,response.json().get("access_token"))
+            access_token = response.json().get("access_token")
+            header = {"Authorization": f"Bearer {access_token}"}
+            with open("/home/amari/Desktop/RevisionBankData/RevisionBankBackend/RevisionBankUnitImages/nightwing.jpeg","rb") as f2:
+                nightwing = f"data:image/png;base64,{base64.b64encode(f2.read()).decode()}"
+            card_data = {"subject":"PA Consulting Test 2","revisioncardtitle":"Network Contacts Test 2","newimagename":"nightwing.jpeg","newimage":nightwing}
+            response = requests.post(f"{uri}/manageaddcardimage",json=card_data,headers=header)
+            print(response.json())
+            self.assertEqual(response.json().get("message"),"revisioncard image was added.")
+
 
 
 

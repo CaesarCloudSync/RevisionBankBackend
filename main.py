@@ -588,7 +588,7 @@ async def managechangecardimage(data : JSONStructure = None, authorization: str 
             if schedule_exists:
                 revsqlops.unschedule_card_qstash(sched_condition)
                 res = caesarcrud.delete_data("scheduledcards",condition=sched_condition)
-            condition = f"revisioncardhash = '{revisioncardhash}' AND revisioncardimgname = '{oldrevisioncardimgname}'"
+            condition = f"revisioncardhash = '{revisioncardhash}' AND revisioncardimgname = '{oldrevisioncardimgname}' email = '{current_user}'"
             image = io.BytesIO(base64.b64decode(newimage.split(",")[-1]))
             old_blob_name =f"{oldrevisioncardimgname}-{current_user}-{revisioncardhash}"
             new_blob_name = f"{newrevisioncardimgname}-{current_user}-{revisioncardhash}"
@@ -622,10 +622,17 @@ async def manageaddcardimage(data : JSONStructure = None, authorization: str = H
             if schedule_exists:
                 revsqlops.unschedule_card_qstash(condition)
             condition_image = f"revisioncardhash = '{revisioncardhash}' AND revisioncardimgname = '{data['newimagename']}' AND email = '{current_user}'"
+
             image_exists = caesarcrud.check_exists(("*"),table=caesarcreatetables.revisioncardimage_table,condition=condition_image)
             if not image_exists:
-                res = revsqlops.store_revisoncard_image(current_user,oldcard_data["newimagename"],oldcard_data["newimage"],revisioncardhash)
-                if res:
+                newrevisioncardimgname = data["newimagename"]
+                image = io.BytesIO(base64.b64decode(data["newimage"].split(",")[-1]))
+                new_blob_name = f"{newrevisioncardimgname}-{current_user}-{revisioncardhash}"
+                image_public_url = caesaraigcp.upload_to_bucket(image,new_blob_name)
+    
+                resblob = caesarcrud.post_data(("revisioncardimgname","email","revisioncardhash","revisioncardimage"),
+                            (newrevisioncardimgname,current_user,revisioncardhash,image_public_url),"revisioncardimages")
+                if resblob:
                     return {"message":"revisioncard image was added."}
 
                 else:
