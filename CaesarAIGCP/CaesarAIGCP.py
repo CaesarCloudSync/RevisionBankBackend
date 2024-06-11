@@ -37,8 +37,8 @@ class CaesarAIGCP:
         blob.upload_from_file(file_bytes) #upload_from_filename(path_to_file)
         
         #returns a public url
-        #self.make_blob_public(blob_name,bucket_name)
-       # return blob.public_url
+        self.make_blob_public(blob_name,bucket_name)
+        return blob.public_url
     def get_media(self,blob_name:str,bucket_name:str="revisioncardimages"):
         try:
             bucket =self._client.get_bucket(bucket_name)

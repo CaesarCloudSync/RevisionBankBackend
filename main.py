@@ -19,9 +19,11 @@ from RevisionBankExceptions.revisionbankexceptions import *
 from RevisionBankCron.revisionbankcron import RevisionBankCron
 from CaesarSQLDB.caesar_create_tables import CaesarCreateTables
 from RevisionBankUtils.revisionbankutils import RevisionBankUtils
+from CaesarAIGCP.CaesarAIGCP import CaesarAIGCP
 from CaesarSQLDB.caesarsql import CaesarSQLContextManager
 from RevisionBankSQLOps.revisionbanksqlops import RevisionBankSQLOps
-
+import base64
+import io
 load_dotenv(".env")
 app = FastAPI()
 app.add_middleware(
@@ -35,6 +37,7 @@ app.add_middleware(
 
 
 caesarcrud = CaesarCRUD()
+caesaraigcp = CaesarAIGCP()
 revisionbankjwt = RevisionBankJWT(caesarcrud)
 caesarcreatetables = CaesarCreateTables()
 caesarcreatetables.create(caesarcrud)
@@ -142,10 +145,13 @@ async def storerevisioncards(data : JSONStructure = None, authorization: str = H
                     if res:
                         for ind,revisioncardimgname in enumerate(revisioncard["revisioncardimgname"]): 
                             revisioncardimage = revisioncard["revisioncardimage"][ind]
+                            #  "revisioncardimgname","email","filetype","revisioncardhash","revisioncardimage"
                             if ind == 0:
                                 res = caesarcrud.update_data(("revisioncardimgname",),
                                     ("true",),caesarcreatetables.accountrevisioncards_table,f"revisioncardhash = '{revisioncardhash}'")    
-                            resblob = revsqlops.store_revisoncard_image(current_user,revisioncardimgname,revisioncardimage,revisioncardhash)
+                            image = io.BytesIO(base64.b64decode(revisioncardimage.split(",")[-1]))
+                            image_public_url = caesaraigcp.upload_to_bucket(image,f"{revisioncardimgname}-{current_user}-{revisioncardhash}")
+                            resblob = caesarcrud.post_data(("revisioncardimgname","email","revisioncardhash","revisioncardimage"),(revisioncardimgname,current_user,revisioncardhash,image_public_url),"revisioncardimages")
                             if resblob:
                                 pass
                             else:
@@ -291,6 +297,7 @@ async def getrevisioncardsws(websocket: WebSocket,client_id:str):
                         if email_exists:
                             async with  CaesarSQLContextManager() as caesarsqlcm:
                                 async for revisioncard  in  caesarsqlcm.run_command_generator(f"SELECT (sendtoemail,subject,revisioncardtitle,revisionscheduleinterval,revisioncard,revisioncardimgname) FROM {caesarcreatetables.accountrevisioncards_table} WHERE {condition} ORDER BY revisioncardid DESC;"):
+                           
                                     revisioncard = await caesarsqlcm.tuple_to_json(revisioncardfields,revisioncard)
                                     revisioncard = revisioncard[0]
                                     sendtoemail = revisioncard["sendtoemail"]
@@ -302,20 +309,14 @@ async def getrevisioncardsws(websocket: WebSocket,client_id:str):
                                     revisioncardhash = CaesarHash.hash_text(current_user + subject  + revisioncardtitle)
                                     condition = f"revisioncardhash = '{revisioncardhash}'"
                                     #print(condition)
-                                    print(revisioncardtext)
+                                    #print(revisioncardimgname)
 
                                     if revisioncardimgname:
                                     
-                                        imagedata = caesarcrud.get_data(("revisioncardimgname","filetype","revisioncardhash","revisioncardimage"),caesarcreatetables.revisioncardimage_table,condition=condition)
+                                        imagedata = caesarcrud.get_data(("revisioncardimgname","revisioncardhash","revisioncardimage"),caesarcreatetables.revisioncardimage_table,condition=condition)
                                         revisioncardimgname = [image["revisioncardimgname"] for image in imagedata]
-                                        revisioncardimage = []
-                                        
-                                        for image in imagedata:
-
-                                            imageb64_string =  caesarcrud.hex_to_base64(image["revisioncardimage"])
-
-                                            final_imageb64 = f"{image['filetype']}{imageb64_string}"
-                                            revisioncardimage.append(final_imageb64 )
+                                        revisioncardimage = [image["revisioncardimage"] for image in imagedata]
+             
                                         #print(revisioncardimage)
                                         await manager.broadcast(json.dumps({"revisioncardtitle":revisioncardtitle,"subject":subject,
                                             "revisionscheduleinterval":revisionscheduleinterval,"revisioncard":revisioncardtext,"revisioncardimgname":revisioncardimgname,"revisioncardimage":revisioncardimage,"sendtoemail":sendtoemail}))

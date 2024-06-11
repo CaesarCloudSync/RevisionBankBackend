@@ -84,9 +84,9 @@ class RevisionBankUnittest(unittest.TestCase):
         self.assertNotEqual(None,response.json().get("access_token"))
         access_token = response.json().get("access_token")
         header = {"Authorization": f"Bearer {access_token}"}
-        response = requests.post(f"{uri}/storerevisioncards",json={"sendtoemail":"amari.lawal@gmail.com","revisionscheduleinterval":"30MI","revisioncards":[{"subject":"PA Consulting Test 2","revisioncardtitle":"Network Contacts Test 2",
+        response = requests.post(f"{uri}/storerevisioncards",json={"revisioncardscheduler":{"sendtoemail":"amari.lawal@gmail.com","revisionscheduleinterval":"30MI","revisioncards":[{"subject":"PA Consulting Test 2","revisioncardtitle":"Network Contacts Test 2",
                                                     "revisioncard":"Hello World","revisionscheduleinterval":"30MI","revisioncardimgname":["car0.jpeg"],"revisioncardimage":[car0]},{"subject":"PA Consulting Test 3","revisioncardtitle":"Network Contacts Test 3",
-                                                    "revisioncard":"Hello World Again","revisionscheduleinterval":"6H","revisioncardimgname":["car1.jpeg","car2.png"],"revisioncardimage":[car1,car2]}]},headers=header)
+                                                    "revisioncard":"Hello World Again","revisionscheduleinterval":"6H","revisioncardimgname":["car1.jpeg","car2.png"],"revisioncardimage":[car1,car2]}]}},headers=header)
         self.assertEqual(response.json().get("message"),"revision card stored")
 
     def test_update_revision_card_no_images(self):

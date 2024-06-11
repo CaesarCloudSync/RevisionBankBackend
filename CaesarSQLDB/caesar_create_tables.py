@@ -4,7 +4,7 @@ class CaesarCreateTables:
         self.usersfields = ("email","password")
         self.studentsubscriptionsfields =  ("hostemail","email","password","emailsleft")
         self.revisioncardfields = ("email","sendtoemail","subject","revisioncardtitle","revisionscheduleinterval","revisioncard","revisioncardimgname","revisioncardhash")
-        self.revisioncardimagefields = ("revisioncardimgname","email","filetype","revisioncardhash","revisioncardurl")
+        self.revisioncardimagefields = ("revisioncardimgname","email","revisioncardhash","revisioncardimage")
         self.scheduledcardfields = ("email","revisioncardhash","scheduleId")
         self.schedule_table = "scheduledcards"
         self.accountrevisioncards_table = "accountrevisioncards"
@@ -22,7 +22,7 @@ class CaesarCreateTables:
         ("varchar(255) NOT NULL","varchar(255) NOT NULL","varchar(255) NOT NULL","varchar(255) NOT NULL","varchar(255) NOT NULL","TEXT NOT NULL","varchar(255)","TEXT NOT NULL"),
         "accountrevisioncards")
         caesarcrud.create_table("revisioncardimageid",self.revisioncardimagefields,
-        ("varchar(255) NOT NULL","varchar(255) NOT NULL","varchar(255) NOT NULL","varchar(255) NOT NULL","TEXT NOT NULL"),
+        ("varchar(255) NOT NULL","varchar(255) NOT NULL","varchar(255) NOT NULL","TEXT NOT NULL"),
         "revisioncardimages")
         caesarcrud.create_table("schedulecardsid",self.scheduledcardfields,
         ("varchar(255) NOT NULL","TEXT NOT NULL","TEXT NOT NULL"),
