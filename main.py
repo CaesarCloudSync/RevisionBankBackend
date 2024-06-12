@@ -310,7 +310,7 @@ async def getrevisioncardsws(websocket: WebSocket,client_id:str):
                                     revisioncardhash = CaesarHash.hash_text(current_user + subject  + revisioncardtitle)
                                     condition = f"revisioncardhash = '{revisioncardhash}'"
                                     #print(condition)
-                                    #print(revisioncardimgname)
+                                    print(revisioncard)
 
                                     if revisioncardimgname:
                                     
@@ -318,13 +318,14 @@ async def getrevisioncardsws(websocket: WebSocket,client_id:str):
                                         revisioncardimgname = [image["revisioncardimgname"] for image in imagedata]
                                         revisioncardimage = [image["revisioncardimage"] for image in imagedata]
              
-                                        #print(revisioncardimage)
+                                        print(revisioncardimage)
                                         await manager.broadcast(json.dumps({"revisioncardtitle":revisioncardtitle,"subject":subject,
                                             "revisionscheduleinterval":revisionscheduleinterval,"revisioncard":revisioncardtext,"revisioncardimgname":revisioncardimgname,"revisioncardimage":revisioncardimage,"sendtoemail":sendtoemail}))
                                     
                                     else:
                                         revisioncardimgname = []
                                         revisioncardimage = []
+                                        print("ho")
                                         await manager.broadcast(json.dumps({"revisioncardtitle":revisioncardtitle,"subject":subject,
                                                                             "revisionscheduleinterval":revisionscheduleinterval,"revisioncard":revisioncardtext,
                                                                             "revisioncardimgname":revisioncardimgname,"revisioncardimage":revisioncardimage,
@@ -634,6 +635,7 @@ async def manageaddcardimage(data : JSONStructure = None, authorization: str = H
     
                 resblob = caesarcrud.post_data(("revisioncardimgname","email","revisioncardhash","revisioncardimage"),
                             (newrevisioncardimgname,current_user,revisioncardhash,image_public_url),"revisioncardimages")
+                res = caesarcrud.update_data(("revisioncardimgname",),("true",),"accountrevisioncards",condition=f"revisioncardhash = '{revisioncardhash}' AND email = '{current_user}'")
                 if resblob:
                     return {"message":"revisioncard image was added."}
 
