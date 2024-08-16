@@ -304,6 +304,7 @@ async def getrevisioncardsws(websocket: WebSocket,client_id:str):
                                 async for revisioncard  in  caesarsqlcm.run_command_generator(f"SELECT (sendtoemail,subject,revisioncardtitle,revisionscheduleinterval,revisioncard,revisioncardimgname) FROM {caesarcreatetables.accountrevisioncards_table} WHERE {condition} ORDER BY revisioncardid DESC;"):
                            
                                     revisioncard = await caesarsqlcm.tuple_to_json(revisioncardfields,revisioncard)
+                                    #print(revisioncard,"bool")
                                     revisioncard = revisioncard[0]
                                     sendtoemail = revisioncard["sendtoemail"]
                                     subject  = revisioncard["subject"]
@@ -314,15 +315,15 @@ async def getrevisioncardsws(websocket: WebSocket,client_id:str):
                                     revisioncardhash = CaesarHash.hash_text(current_user + subject  + revisioncardtitle)
                                     condition = f"revisioncardhash = '{revisioncardhash}'"
                                     #print(condition)
-                                    print(revisioncard)
+                                    #print(revisioncard)
 
-                                    if revisioncardimgname:
+                                    if revisioncardimgname != "NULL" and revisioncardimgname != None:
                                     
                                         imagedata = caesarcrud.get_data(("revisioncardimgname","revisioncardhash","revisioncardimage"),caesarcreatetables.revisioncardimage_table,condition=condition)
                                         revisioncardimgname = [image["revisioncardimgname"] for image in imagedata]
                                         revisioncardimage = [image["revisioncardimage"] for image in imagedata]
              
-                                        print(revisioncardimage)
+                                        #print(revisioncardimage)
                                         await manager.broadcast(json.dumps({"revisioncardtitle":revisioncardtitle,"subject":subject,
                                             "revisionscheduleinterval":revisionscheduleinterval,"revisioncard":revisioncardtext,"revisioncardimgname":revisioncardimgname,"revisioncardimage":revisioncardimage,"sendtoemail":sendtoemail}))
                                     
