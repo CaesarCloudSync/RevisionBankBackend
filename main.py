@@ -596,14 +596,15 @@ async def managechangecardimage(data : JSONStructure = None, authorization: str 
             if schedule_exists:
                 revsqlops.unschedule_card_qstash(sched_condition)
                 res = caesarcrud.delete_data("scheduledcards",condition=sched_condition)
-            condition = f"revisioncardhash = '{revisioncardhash}' AND revisioncardimgname = '{oldrevisioncardimgname}' email = '{current_user}'"
+            condition = f"revisioncardhash = '{revisioncardhash}' AND revisioncardimgname = '{oldrevisioncardimgname}' AND email = '{current_user}'"
             image = io.BytesIO(base64.b64decode(newimage.split(",")[-1]))
             old_blob_name =f"{oldrevisioncardimgname}-{current_user}-{revisioncardhash}"
             new_blob_name = f"{newrevisioncardimgname}-{current_user}-{revisioncardhash}"
             caesaraigcp.rename_blob(old_blob_name,new_blob_name)
-            image_public_url = caesaraigcp.upload_to_bucket(image,f"{newrevisioncardimgname}-{current_user}-{revisioncardhash}")
+            image_public_url = caesaraigcp.upload_to_bucket(image,new_blob_name)
+            print(newrevisioncardimgname)
             resblob = caesarcrud.update_data(("revisioncardimgname","revisioncardimage",),(newrevisioncardimgname,image_public_url),"revisioncardimages",condition=condition)
-
+            print((newrevisioncardimgname,image_public_url))
 
             #res = revsqlops.update_revisoncard_image(current_user,newrevisioncardimgname,newimage,revisioncardhash,oldrevisioncardimgname)
             if resblob:
@@ -613,6 +614,7 @@ async def managechangecardimage(data : JSONStructure = None, authorization: str 
                 #return {"message":"revision card meta data changed."}
         except Exception as ex:
             #print({f"error":f"{type(ex)},{str(ex)}"})
+            print({f"error":f"{type(ex)},{str(ex)}"})
             return {f"error":f"{type(ex)},{str(ex)}"}
 @app.post('/manageaddcardimage') # POST # allow all origins all methods.
 async def manageaddcardimage(data : JSONStructure = None, authorization: str = Header(None)):

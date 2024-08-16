@@ -15,7 +15,8 @@ class CaesarSQLDetails:
         'password': p.password,
         'port': p.port,
         'host': p.hostname,
-        "autocommit" : True
+        "autocommit" : True,
+        "prepare_threshold":None
 
     }
 class CaesarSQLContextManager: 
