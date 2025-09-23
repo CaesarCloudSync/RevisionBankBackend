@@ -6,7 +6,7 @@ from urllib.parse import urlparse
 from typing import Any, Callable, Union
 
 class CaesarSQLDetails:
-    conStr = 'postgres://postgres.xkpuciyedkifvgkttkpu:EKwKq0L9KrJLC5Ii@aws-0-eu-central-1.pooler.supabase.com:6543/postgres'
+    conStr = 'postgresql://postgres:SwonICiI0KhtaeHg@db.uamkdvfdvcnyggrywekf.supabase.co:5432/postgres'
     p = urlparse(conStr)
 
     pg_connection_dict = {
