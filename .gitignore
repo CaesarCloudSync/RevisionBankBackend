@@ -11,3 +11,6 @@ test4.py
 mydata.json
 .space
 revisionbankscheduler
+.terraform/
+.terraform.lock.hcl
+__pycache__/
