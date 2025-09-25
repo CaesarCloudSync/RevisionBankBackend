@@ -6,7 +6,8 @@ from urllib.parse import urlparse
 from typing import Any, Callable, Union
 
 class CaesarSQLDetails:
-    conStr = 'postgresql://postgres.uamkdvfdvcnyggrywekf:SwonICiI0KhtaeHg@aws-1-eu-west-2.pooler.supabase.com:6543/postgres'
+    conStr = 'postgresql://postgres.xkpuciyedkifvgkttkpu:ih4NMOmWVP4BnsUb@aws-0-eu-central-1.pooler.supabase.com:6543/postgres'
+    
     
     # 'postgres://postgres.xkpuciyedkifvgkttkpu:EKwKq0L9KrJLC5Ii@aws-0-eu-central-1.pooler.supabase.com:6543/postgres'
     p = urlparse(conStr)
