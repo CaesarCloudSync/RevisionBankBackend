@@ -10,7 +10,7 @@ terraform {
 
 provider "google" {
   # Replace `PROJECT_ID` with your project
-  project = "revisionbankbackend"
+  project = "caesaraiapis"
 }
 
 # Enables the Cloud Run API
@@ -21,13 +21,13 @@ resource "google_project_service" "run_api" {
 }
 
 resource "google_cloud_run_service" "run_service" {
-  name = "revisionbankbackendsql"
+  name = "revisionbankbackend"
   location = "us-central1"
 
   template {
     spec {
       containers {
-        image = "palondomus/revisionbankbackendsql:33"
+        image = "palondomus/revisionbankbackend:34"
       }
     }
   }

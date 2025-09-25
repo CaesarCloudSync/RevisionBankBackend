@@ -1,5 +1,5 @@
 #!/bin/bash
-image="revisionbankbackendsql"
+image="revisionbankbackend"
 
 function getVersions() {
     IN=$(cat main.tf | grep palondomus/$image)
