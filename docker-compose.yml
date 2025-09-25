@@ -1,0 +1,25 @@
+version: "3.8"
+
+services:
+  web:
+    # Use the local Dockerfile to build the image
+    build: .
+    
+    # Map port 8080 from the container to port 8080 on the host machine.
+    # This allows you to access the Uvicorn application at http://localhost:8080
+    ports:
+      - "8080:8080"
+    
+    # Mount the current directory into the container's working directory.
+    # This is useful for development, as changes to your code will be reflected
+    # instantly due to the --reload flag in the Uvicorn command.
+    volumes:
+      - .:/home/user/app
+    
+    # Run the Uvicorn server with the specified host and port.
+    # This command overrides the CMD instruction in the Dockerfile if needed,
+    # ensuring the application runs as expected.
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080", "--reload"]
+    
+    # Assign a name to the container for easier management
+    container_name: revisionbankbackend

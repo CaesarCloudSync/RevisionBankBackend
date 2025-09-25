@@ -70,7 +70,7 @@ manager = ConnectionManager()
 
 @app.get('/')# GET # allow all origins all methods.
 async def index():
-    return "Hello World"
+    return "This is RevisionBank"
 @app.post("/api/v1/wakeupdb")
 async def wakeupdb():
     user = caesarcrud.get_data(("email",),"users",getamount=1)

@@ -6,17 +6,19 @@ from urllib.parse import urlparse
 from typing import Any, Callable, Union
 
 class CaesarSQLDetails:
-    conStr = 'postgresql://postgres:SwonICiI0KhtaeHg@db.uamkdvfdvcnyggrywekf.supabase.co:5432/postgres'
+    conStr = 'postgresql://postgres.uamkdvfdvcnyggrywekf:SwonICiI0KhtaeHg@aws-1-eu-west-2.pooler.supabase.com:6543/postgres'
+    
+    # 'postgres://postgres.xkpuciyedkifvgkttkpu:EKwKq0L9KrJLC5Ii@aws-0-eu-central-1.pooler.supabase.com:6543/postgres'
     p = urlparse(conStr)
 
     pg_connection_dict = {
-        'dbname': p.scheme,
+        'dbname': p.path.lstrip("/"),
         'user': p.username,
         'password': p.password,
         'port': p.port,
         'host': p.hostname,
         "autocommit" : True,
-        "prepare_threshold":None
+        #"prepare_threshold":None
 
     }
 class CaesarSQLContextManager: 
@@ -24,6 +26,9 @@ class CaesarSQLContextManager:
     async def __aenter__(self) -> None:
         self.aconn = await psycopg.AsyncConnection.connect(**CaesarSQLDetails.pg_connection_dict)
         return self
+    async def __aexit__(self, exc_type, exc_value, traceback):
+        if self.aconn:
+            await self.aconn.close()
     async def run_command_generator(self,sqlcommand : str = None,arraysize:int =1000, datatuple : tuple =None,filename :str = None,verbose:int=1):
         # Executes SQL Command or takes SQL file as input.
         #if verbose == 1:
